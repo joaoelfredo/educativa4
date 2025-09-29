@@ -1,11 +1,22 @@
-// Versão "mock" (falsa) apenas para o app rodar
+import api from './api';
+
+/**
+ * Envia as credenciais para a API de login.
+ * A API deve retornar um objeto contendo o token: { token: "..." }
+ */
 export const loginUser = async (email, password) => {
-  console.log('Tentando login com:', email, password);
-  // Simula uma chamada de API
-  return new Promise(resolve => setTimeout(() => resolve('fake-token-123'), 1000));
+  const response = await api.post('/auth', { email, password });
+  return { token: response.data }; 
 };
 
+/**
+ * Envia os dados de um novo usuário para a API de registro.
+ */
 export const registerUser = async (name, email, password) => {
-  console.log('Tentando registrar:', name, email, password);
-  return new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+  // ATUALIZADO: Usando o endpoint POST /user
+  const response = await api.post('/user', { name, email, password });
+  return response.data;
 };
+
+// A rota de recuperação de senha pode ser adicionada aqui quando o backend a tiver
+// export const forgotPassword = async (email) => { ... };

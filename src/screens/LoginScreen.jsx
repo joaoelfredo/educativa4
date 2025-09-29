@@ -16,13 +16,11 @@ const LoginScreen = ({ navigation }) => {
   const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
-    // Verificação 1: Campos vazios
     if (!email || !password) {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
       return;
     }
 
-    // Verificação 2: Formato do e-mail
     if (!isValidEmail(email)) {
       Alert.alert('E-mail Inválido', 'Por favor, insira um formato de e-mail válido.');
       return; 
@@ -38,54 +36,64 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  // Conteúdo da tela
+  const renderContent = () => (
+    <SafeAreaView style={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.header}>
+          <Mascot width={128} height={128} />
+          <Text style={styles.title}>Bem-vindo ao EducAtiva!</Text>
+          <Text style={styles.subtitle}>Seu companheiro de estudos para ajudar!</Text>
+        </View>
+
+        <View style={styles.form}>
+          <Input 
+            placeholder="📧 Seu e-mail" 
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Input 
+            placeholder="🔒 Sua senha" 
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry 
+          />
+          <Button 
+            title="Entrar no EducAtiva" 
+            onPress={handleLogin} 
+            loading={loading}
+          />
+          <TouchableOpacity onPress={() => navigation.navigate('RecuperacaoSenha')}>
+            <Text style={styles.link}>Esqueci minha senha</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Primeira vez aqui? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
+            <Text style={[styles.footerText, styles.link]}>Criar conta</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
       <LinearGradient colors={COLORS.secondaryGradient} style={styles.container}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <SafeAreaView style={styles.content}>
-            <ScrollView contentContainerStyle={styles.scrollViewContent}>
-              <View style={styles.header}>
-                <Mascot width={128} height={128} />
-                <Text style={styles.title}>Bem-vindo ao EducAtiva!</Text>
-                <Text style={styles.subtitle}>Seu companheiro de estudos para ajudar!</Text>
-              </View>
-
-              <View style={styles.form}>
-                <Input 
-                  placeholder="📧 Seu e-mail" 
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <Input 
-                  placeholder="🔒 Sua senha" 
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry 
-                />
-                <Button 
-                  title="Entrar no EducAtiva" 
-                  onPress={handleLogin} 
-                  loading={loading}
-                />
-                <TouchableOpacity onPress={() => navigation.navigate('RecuperacaoSenha')}>
-                  <Text style={styles.link}>Esqueci minha senha</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Primeira vez aqui? </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
-                  <Text style={[styles.footerText, styles.link]}>Criar conta</Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </SafeAreaView>
-        </TouchableWithoutFeedback>
+        {/* Só usa TouchableWithoutFeedback em mobile */}
+        {Platform.OS === 'web' ? (
+          renderContent()
+        ) : (
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            {renderContent()}
+          </TouchableWithoutFeedback>
+        )}
       </LinearGradient>
     </KeyboardAvoidingView>
   );
@@ -118,6 +126,5 @@ const styles = StyleSheet.create({
     link: { ...FONTS.body, fontWeight: '700', color: COLORS.primary, textAlign: 'center', paddingVertical: 8 },
     footerText: { ...FONTS.body, color: COLORS.white },
 });
-
 
 export default LoginScreen;
