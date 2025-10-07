@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from '../store/AuthContext';
+import { ActivityIndicator, View, Platform, Text } from 'react-native';
 
 import LoginScreen from '../screens/LoginScreen';
 import CadastroScreen from '../screens/CadastroScreen';
 import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenhaScreen';
 import HomeScreen from '../screens/HomeScreen'; // Tela principal pós-login
-import { ActivityIndicator, View } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,17 +29,20 @@ const AppStack = () => (
 const AppNavigator = () => {
   const { userToken, isLoading } = useContext(AuthContext);
 
+  // 🌀 Tela de carregamento enquanto verifica o token no AsyncStorage
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#007bff" />
+        {Platform.OS === 'web' && <Text>Carregando...</Text>}
       </View>
     );
   }
 
+  // 🧭 Navegação condicional
   return (
     <NavigationContainer>
-      {userToken !== null ? <AppStack /> : <AuthStack />}
+      {userToken ? <AppStack /> : <AuthStack />}
     </NavigationContainer>
   );
 };
