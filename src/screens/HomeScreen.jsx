@@ -12,7 +12,7 @@ import { COLORS } from '../constants/theme';
 const HomeScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('home');
 
-  // Dados mockados - depois virão de API/Context teste
+  // Dados mockados - depois virão de API/Context
   const userData = {
     name: 'Ana',
     level: 3,
@@ -62,8 +62,6 @@ const HomeScreen = ({ navigation }) => {
   const handleTabPress = (tabId) => {
     setActiveTab(tabId);
     console.log('Tab selecionada:', tabId);
-    // Aqui você pode adicionar navegação ou trocar conteúdo
-    // Por exemplo: navigation.navigate(tabId)
   };
 
   return (
