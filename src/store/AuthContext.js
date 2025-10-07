@@ -33,14 +33,11 @@ const login = async (email, password) => {
   };
 
   const logout = async () => {
-  try {
-    await AsyncStorage.removeItem('userToken');
+    setIsLoading(true);
     setUserToken(null);
-  } catch (e) {
-    console.log('Erro ao deslogar:', e);
-  }
-};
-
+    await AsyncStorage.removeItem('userToken');
+    setIsLoading(false);
+  };
   
   const register = async (name, email, password) => {
     // A lógica de registro pode retornar um token diretamente ou não
