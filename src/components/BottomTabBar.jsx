@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
+
 const BottomTabBar = ({ activeTab, onTabPress }) => {
   const tabs = [
     { id: 'home', icon: '🏠', label: 'Início' },

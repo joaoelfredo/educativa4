@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Alert, TouchableOpacity, KeyboardAvoidingView, ScrollView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+
 import { AuthContext } from '../store/AuthContext';
 import Input from '../components/Input';
 import Button from '../components/Button';

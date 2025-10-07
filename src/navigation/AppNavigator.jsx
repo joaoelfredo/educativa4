@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from '../store/AuthContext';
 import { ActivityIndicator, View, Platform, Text } from 'react-native';
 
+
 import LoginScreen from '../screens/LoginScreen';
 import CadastroScreen from '../screens/CadastroScreen';
 import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenhaScreen';

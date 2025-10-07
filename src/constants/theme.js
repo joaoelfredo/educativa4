@@ -1,4 +1,5 @@
 export const COLORS = {
+  
   primary: '#f97316',   // Laranja principal
   primaryGradient: ['#fb923c', '#f97316'],
   secondary: '#1e40af', // Azul Marinho

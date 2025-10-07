@@ -66,4 +66,5 @@ const styles = StyleSheet.create({
   },
 });
 
+
 export default MascotMessage;

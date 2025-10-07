@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 
+
 const QuickActions = ({ onNewTask, onSetReminder }) => {
   return (
     <View style={styles.container}>

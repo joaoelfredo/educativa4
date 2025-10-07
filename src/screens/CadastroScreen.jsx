@@ -167,4 +167,5 @@ const styles = StyleSheet.create({
   footerText: { ...FONTS.body, color: COLORS.white },
 });
 
+
 export default CadastroScreen;
