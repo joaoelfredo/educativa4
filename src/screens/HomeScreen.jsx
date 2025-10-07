@@ -12,7 +12,7 @@ import { COLORS } from '../constants/theme';
 const HomeScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('home');
 
-  // Dados mockados - depois virão de API/Context
+  // Dados mockados - depois virão de API/Context teste
   const userData = {
     name: 'Ana',
     level: 3,
