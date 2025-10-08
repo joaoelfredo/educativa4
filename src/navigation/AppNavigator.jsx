@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthContext } from '../store/AuthContext';
-import { TasksProvider } from '../store/TasksContext'; // 1. IMPORTE O PROVIDER DE TAREFAS
+import { TasksProvider } from '../store/TasksContext';
 import { ActivityIndicator, View } from 'react-native';
 
 // Telas de Autenticação
@@ -14,6 +14,10 @@ import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenhaScreen';
 // Telas Principais do App
 import HomeScreen2 from '../screens/HomeScreen2';
 import CalendarScreen from '../screens/CalendarScreen';
+// --> 1. IMPORTE AS NOVAS TELAS QUE CRIAMOS
+import RemindersScreen from '../screens/RemindersScreen';
+import RewardsScreen from '../screens/RewardsScreen';
+
 
 // Componente de UI
 import BottomTabBar2 from '../components/BottomTabBar2';
@@ -32,8 +36,6 @@ const AuthStack = () => (
 
 // O navegador de abas que será exibido após o login
 const AppTabs = () => (
-  // 2. ENVOLVA O NAVEGADOR COM O TASKS PROVIDER
-  // Isso faz com que todas as telas dentro dele compartilhem o mesmo estado de tarefas
   <TasksProvider>
     <Tab.Navigator
       screenOptions={{ headerShown: false }}
@@ -41,7 +43,9 @@ const AppTabs = () => (
     >
       <Tab.Screen name="Home" component={HomeScreen2} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
-      {/* Adicione as outras telas da Tab Bar aqui quando criá-las */}
+      {/* --> 2. ADICIONE AS NOVAS TELAS AO NAVEGADOR DE ABAS */}
+      <Tab.Screen name="Reminders" component={RemindersScreen} />
+      <Tab.Screen name="Rewards" component={RewardsScreen} />
     </Tab.Navigator>
   </TasksProvider>
 );

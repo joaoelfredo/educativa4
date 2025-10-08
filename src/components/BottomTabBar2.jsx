@@ -7,8 +7,8 @@ const BottomTabBar2 = ({ state, navigation }) => {
   const tabInfo = {
     'Home': { icon: '🏠', label: 'Início' },
     'Calendar': { icon: '📅', label: 'Calendário' },
-    // 'Reminders': { icon: '🔔', label: 'Lembretes' },
-    // 'Rewards': { icon: '🏆', label: 'Conquistas' },
+    'Reminders': { icon: '🔔', label: 'Lembretes' },
+    'Rewards': { icon: '🏆', label: 'Conquistas' },
   };
 
   return (
