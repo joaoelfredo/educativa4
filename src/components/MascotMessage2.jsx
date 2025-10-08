@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Mascot from './Mascot';
 import { COLORS, FONTS } from '../constants/theme';
 
-const MascotMessage = ({ message }) => {
+const MascotMessage2 = ({ message }) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -67,4 +67,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default MascotMessage;
+export default MascotMessage2;

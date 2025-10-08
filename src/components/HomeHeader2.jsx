@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../store/AuthContext';
 import { COLORS, FONTS } from '../constants/theme';
 
-const HomeHeader = ({ userData, onProfilePress, onSettingsPress }) => {
+const HomeHeader2 = ({ userData, onProfilePress, onSettingsPress }) => {
   const { logout } = useContext(AuthContext);
 
   return (
@@ -146,4 +146,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default HomeHeader;
+export default HomeHeader2;

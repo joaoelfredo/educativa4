@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
 
-const BottomTabBar = ({ activeTab, onTabPress }) => {
+const BottomTabBar2 = ({ activeTab, onTabPress }) => {
   const tabs = [
     { id: 'home', icon: '🏠', label: 'Início' },
     { id: 'calendar', icon: '📅', label: 'Calendário' },
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BottomTabBar;
+export default BottomTabBar2;

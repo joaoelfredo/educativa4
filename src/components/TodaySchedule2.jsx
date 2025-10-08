@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
 
-const TodaySchedule = ({ date, schedule }) => {
+const TodaySchedule2 = ({ date, schedule }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📋 Hoje - {date}</Text>
@@ -84,4 +84,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TodaySchedule;
+export default TodaySchedule2;

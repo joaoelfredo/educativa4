@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 
 
-const QuickActions = ({ onNewTask, onSetReminder }) => {
+const QuickActions2 = ({ onNewTask, onSetReminder }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.button} onPress={onNewTask} activeOpacity={0.8}>
@@ -58,4 +58,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default QuickActions;
+export default QuickActions2;

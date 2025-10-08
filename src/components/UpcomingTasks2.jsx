@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
 
-const UpcomingTasks = ({ tasks }) => {
+const UpcomingTasks2 = ({ tasks }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>⚡ Próximas Tarefas</Text>
@@ -82,4 +82,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UpcomingTasks;
+export default UpcomingTasks2;
