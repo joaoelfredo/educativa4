@@ -7,14 +7,21 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [userToken, setUserToken] = useState(null);
+  // O nome é userToken, mas ele vai guardar o objeto inteiro que a API retorna
+  const [userToken, setUserToken] = useState(null); 
 
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      const token = await loginUser(email, password); // Chamada de API
-      setUserToken(token);
-      await AsyncStorage.setItem('userToken', token);
+      // --> A variável 'token' aqui é na verdade um objeto retornado pela API.
+      const tokenObject = await loginUser(email, password); // Chamada de API
+
+      // --> 1. Stringify o objeto ANTES de salvar.
+      await AsyncStorage.setItem('userToken', JSON.stringify(tokenObject));
+      
+      // --> 2. O estado 'userToken' agora vai guardar o objeto inteiro.
+      setUserToken(tokenObject);
+
     } catch (error) {
       // Lançar o erro para a tela de Login tratar
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
@@ -24,26 +31,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-  try {
-    await AsyncStorage.removeItem('userToken');
-    setUserToken(null);
-  } catch (e) {
-    console.log('Erro ao deslogar:', e);
-  }
-};
+    try {
+      await AsyncStorage.removeItem('userToken');
+      setUserToken(null);
+    } catch (e) {
+      console.log('Erro ao deslogar:', e);
+    }
+  };
 
-  
   const register = async (name, email, password) => {
-    // A lógica de registro pode retornar um token diretamente ou não
-    // Aqui, vamos apenas chamar o serviço e deixar o usuário fazer login depois
     await registerUser(name, email, password);
   };
 
   const isLoggedIn = async () => {
     try {
       setIsLoading(true);
-      let token = await AsyncStorage.getItem('userToken');
-      setUserToken(token);
+      // --> 1. Recupera o dado como string.
+      let storedTokenString = await AsyncStorage.getItem('userToken');
+
+      // --> 2. IMPORTANTE: Verifica se algo foi encontrado antes de tentar o parse.
+      if (storedTokenString) {
+        // --> 3. Converte a string de volta para um objeto e atualiza o estado.
+        setUserToken(JSON.parse(storedTokenString));
+      }
     } catch (e) {
       console.log(`isLogged in error ${e}`);
     } finally {
