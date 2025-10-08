@@ -4,11 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from '../store/AuthContext';
 import { ActivityIndicator, View, Platform, Text } from 'react-native';
 
-
 import LoginScreen from '../screens/LoginScreen';
 import CadastroScreen from '../screens/CadastroScreen';
 import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenhaScreen';
-import HomeScreen from '../screens/HomeScreen'; // Tela principal pós-login
+import HomeScreen2 from '../screens/HomeScreen2';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +21,7 @@ const AuthStack = () => (
 
 const AppStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Home" component={HomeScreen} />
+    <Stack.Screen name="Home" component={HomeScreen2} />
     {/* Outras telas do app virão aqui */}
   </Stack.Navigator>
 );
@@ -30,7 +29,6 @@ const AppStack = () => (
 const AppNavigator = () => {
   const { userToken, isLoading } = useContext(AuthContext);
 
-  // 🌀 Tela de carregamento enquanto verifica o token no AsyncStorage
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -40,7 +38,6 @@ const AppNavigator = () => {
     );
   }
 
-  // 🧭 Navegação condicional
   return (
     <NavigationContainer>
       {userToken ? <AppStack /> : <AuthStack />}

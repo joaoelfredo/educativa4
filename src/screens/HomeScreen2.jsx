@@ -12,9 +12,7 @@ import { COLORS } from '../constants/theme';
 const HomeScreen2 = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('home');
 
-
-  
-  // Dados mockados - depois virão de API/Context teste
+  // Dados mockados - depois virão de API/Context
   const userData = {
     name: 'Ana',
     level: 3,
@@ -23,7 +21,8 @@ const HomeScreen2 = ({ navigation }) => {
     xpToNextLevel: 150,
   };
 
-  const todaySchedule = [
+  // MUDEI O NOME: todayScheduleData (antes era TodaySchedule2)
+  const todayScheduleData = [
     {
       id: 1,
       title: 'Aula de Matemática',
@@ -42,7 +41,8 @@ const HomeScreen2 = ({ navigation }) => {
     },
   ];
 
-  const upcomingTasks = [
+  // MUDEI O NOME: upcomingTasksData (antes era UpcomingTasks2)
+  const upcomingTasksData = [
     {
       id: 1,
       title: 'Relatório de Estágio',
@@ -64,8 +64,6 @@ const HomeScreen2 = ({ navigation }) => {
   const handleTabPress = (tabId) => {
     setActiveTab(tabId);
     console.log('Tab selecionada:', tabId);
-    // Aqui você pode adicionar navegação ou trocar conteúdo
-    // Por exemplo: navigation.navigate(tabId)
   };
 
   return (
@@ -96,10 +94,10 @@ const HomeScreen2 = ({ navigation }) => {
        
         <TodaySchedule
           date="Quarta, 13 Nov"
-          schedule={todaySchedule}
+          schedule={todayScheduleData}
         />
        
-        <UpcomingTasks tasks={upcomingTasks} />
+        <UpcomingTasks tasks={upcomingTasksData} />
       </ScrollView>
 
       <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
