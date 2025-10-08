@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, StyleSheet, ScrollView, SafeAreaView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import HomeHeader from '../components/HomeHeader2';
+import { COLORS } from '../constants/theme';
+import { TasksContext } from '../store/TasksContext'; // Importando o Contexto de Tarefas
+
+// Componentes
+import AppHeader from '../components/AppHeader'; // Usando o novo Header Padrão
 import MascotMessage from '../components/MascotMessage2';
 import QuickActions from '../components/QuickActions2';
 import TodaySchedule from '../components/TodaySchedule2';
 import UpcomingTasks from '../components/UpcomingTasks2';
-import BottomTabBar from '../components/BottomTabBar2';
-import { COLORS } from '../constants/theme';
+import AddTaskModal from '../components/AddTaskModal';
 
 const HomeScreen2 = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState('home');
+  const [isModalVisible, setModalVisible] = useState(false);
+  
+  // Pegando a lista de tarefas e a função de adicionar do Contexto Central
+  const { tasks, addTask } = useContext(TasksContext);
 
-  // Dados mockados - depois virão de API/Context
   const userData = {
     name: 'Ana',
     level: 3,
@@ -21,86 +26,41 @@ const HomeScreen2 = ({ navigation }) => {
     xpToNextLevel: 150,
   };
 
-  // MUDEI O NOME: todayScheduleData (antes era TodaySchedule2)
-  const todayScheduleData = [
-    {
-      id: 1,
-      title: 'Aula de Matemática',
-      time: '08:00 - 10:00',
-      location: 'Sala 105',
-      color: COLORS.azulClaro,
-      backgroundColor: COLORS.gelo,
-    },
-    {
-      id: 2,
-      title: 'Entrega: Trabalho de História',
-      time: 'Até 20:00',
-      location: 'Importante!',
-      color: COLORS.laranja,
-      backgroundColor: '#FFF3E0',
-    },
-  ];
-
-  // MUDEI O NOME: upcomingTasksData (antes era UpcomingTasks2)
-  const upcomingTasksData = [
-    {
-      id: 1,
-      title: 'Relatório de Estágio',
-      dueDate: 'Vence em 2 dias',
-      icon: '📝',
-      color: COLORS.laranja,
-      backgroundColor: '#FFF3E0',
-    },
-    {
-      id: 2,
-      title: 'Prova de Cálculo',
-      dueDate: 'Vence em 5 dias',
-      icon: '📚',
-      color: COLORS.azulClaro,
-      backgroundColor: COLORS.gelo,
-    },
-  ];
-
-  const handleTabPress = (tabId) => {
-    setActiveTab(tabId);
-    console.log('Tab selecionada:', tabId);
+  const handleAddTask = (newTask) => {
+    // Usando a função do Contexto para adicionar a tarefa na lista global
+    addTask(newTask);
+    setModalVisible(false);
   };
+
+  // Filtra as tarefas de hoje para o componente TodaySchedule
+  const today = new Date().toISOString().split('T')[0];
+  const tasksForToday = tasks.filter(task => task.date === today);
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={COLORS.secondaryGradient} style={styles.headerGradient}>
-        <SafeAreaView>
-          <HomeHeader
-            userData={userData}
-            onProfilePress={() => navigation.navigate('Profile')}
-            onSettingsPress={() => console.log('Settings')}
-          />
-        </SafeAreaView>
-      </LinearGradient>
+      <AppHeader navigation={navigation} userData={userData} />
 
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <MascotMessage
-          message="Oi Ana! Você tem 2 tarefas para hoje. Vamos começar?"
-        />
-       
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <MascotMessage message={`Oi Ana! Você tem ${tasksForToday.length} tarefa(s) para hoje. Vamos começar?`} />
+        
         <QuickActions
-          onNewTask={() => console.log('Nova Tarefa')}
+          onNewTask={() => setModalVisible(true)}
           onSetReminder={() => console.log('Definir Lembrete')}
         />
-       
+        
         <TodaySchedule
-          date="Quarta, 13 Nov"
-          schedule={todayScheduleData}
+          date={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          schedule={tasksForToday}
         />
-       
-        <UpcomingTasks tasks={upcomingTasksData} />
+        
+        <UpcomingTasks tasks={tasks} />
       </ScrollView>
-
-      <BottomTabBar activeTab={activeTab} onTabPress={handleTabPress} />
+      
+      <AddTaskModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleAddTask}
+      />
     </View>
   );
 };
@@ -109,12 +69,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  headerGradient: {
-    paddingBottom: 20,
-  },
-  content: {
-    flex: 1,
   },
   scrollContent: {
     padding: 16,
