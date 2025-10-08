@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import HomeHeader from '../components/HomeHeader';
-import MascotMessage from '../components/MascotMessage';
-import QuickActions from '../components/QuickActions';
-import TodaySchedule from '../components/TodaySchedule';
-import UpcomingTasks from '../components/UpcomingTasks';
-import BottomTabBar from '../components/BottomTabBar';
+import HomeHeader from '../components/HomeHeader2';
+import MascotMessage from '../components/MascotMessage2';
+import QuickActions from '../components/QuickActions2';
+import TodaySchedule from '../components/TodaySchedule2';
+import UpcomingTasks from '../components/UpcomingTasks2';
+import BottomTabBar from '../components/BottomTabBar2';
 import { COLORS } from '../constants/theme';
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen2 = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('home');
 
-  // Dados mockados - depois virão de API/Context
+
+  
+  // Dados mockados - depois virão de API/Context teste
   const userData = {
     name: 'Ana',
     level: 3,
@@ -62,6 +64,8 @@ const HomeScreen = ({ navigation }) => {
   const handleTabPress = (tabId) => {
     setActiveTab(tabId);
     console.log('Tab selecionada:', tabId);
+    // Aqui você pode adicionar navegação ou trocar conteúdo
+    // Por exemplo: navigation.navigate(tabId)
   };
 
   return (
@@ -120,4 +124,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default HomeScreen2;

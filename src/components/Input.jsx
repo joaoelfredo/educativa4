@@ -2,6 +2,7 @@ import React from 'react';
 import { TextInput, StyleSheet } from 'react-native';
 import { COLORS } from '../constants/theme';
 
+
 const Input = (props) => {
   return (
     <TextInput

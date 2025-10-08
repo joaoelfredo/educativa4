@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 
+
 const Button = ({ title, onPress, loading, type = 'primary' }) => {
   if (type === 'primary') {
     return (

@@ -9,23 +9,14 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState(null);
 
-const login = async (email, password) => {
+  const login = async (email, password) => {
     setIsLoading(true);
     try {
-      // 1. Chama a função do authService
-      const response = await loginUser(email, password);
-      const token = response.token; // Pega o token da resposta da API
-
-      if (token) {
-        // 2. Salva o token no estado do app
-        setUserToken(token);
-        // 3. Salva o token no AsyncStorage (o "localStorage" do React Native)
-        await AsyncStorage.setItem('userToken', token);
-      } else {
-        throw new Error("Token não recebido da API");
-      }
-
+      const token = await loginUser(email, password); // Chamada de API
+      setUserToken(token);
+      await AsyncStorage.setItem('userToken', token);
     } catch (error) {
+      // Lançar o erro para a tela de Login tratar
       throw new Error(error.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setIsLoading(false);
@@ -33,11 +24,14 @@ const login = async (email, password) => {
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    setUserToken(null);
+  try {
     await AsyncStorage.removeItem('userToken');
-    setIsLoading(false);
-  };
+    setUserToken(null);
+  } catch (e) {
+    console.log('Erro ao deslogar:', e);
+  }
+};
+
   
   const register = async (name, email, password) => {
     // A lógica de registro pode retornar um token diretamente ou não
