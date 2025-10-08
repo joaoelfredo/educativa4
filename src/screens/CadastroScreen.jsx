@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -26,6 +27,8 @@ const CadastroScreen = ({ navigation }) => {
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -36,17 +39,14 @@ const CadastroScreen = ({ navigation }) => {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
       return;
     }
-
     if (!isValidEmail(form.email)) {
       Alert.alert('E-mail Inválido', 'Por favor, insira um formato de e-mail válido.');
       return;
     }
-
     if (form.password !== form.confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
-
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -94,13 +94,29 @@ const CadastroScreen = ({ navigation }) => {
                 placeholder="🔒 Sua senha"
                 value={form.password}
                 onChangeText={(text) => handleChange('password', text)}
-                secureTextEntry
+                secureTextEntry={!isPasswordVisible}
+                icon={
+                  <Ionicons
+                    name={isPasswordVisible ? 'eye-off' : 'eye'}
+                    size={24}
+                    color={COLORS.blue} 
+                  />
+                }
+                onIconPress={() => setPasswordVisible(!isPasswordVisible)}
               />
               <Input
                 placeholder="🔒 Confirmar senha"
                 value={form.confirmPassword}
                 onChangeText={(text) => handleChange('confirmPassword', text)}
-                secureTextEntry
+                secureTextEntry={!isConfirmPasswordVisible}
+                icon={
+                  <Ionicons
+                    name={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
+                    size={24}
+                    color={COLORS.blue} 
+                  />
+                }
+                onIconPress={() => setConfirmPasswordVisible(!isConfirmPasswordVisible)}
               />
               <Button
                 title="Criar Conta no EducAtiva"

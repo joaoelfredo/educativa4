@@ -1,33 +1,48 @@
 import React from 'react';
-import { TextInput, StyleSheet } from 'react-native';
-import { COLORS } from '../constants/theme';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { COLORS } from '../constants/theme'; 
 
-
-const Input = (props) => {
+const Input = ({ icon, onIconPress, ...props }) => {
   return (
-    <TextInput
-      style={styles.input}
-      placeholderTextColor={COLORS.placeholder}
-      {...props}
-    />
+    <View style={styles.container}>
+      <TextInput
+        style={styles.textInput}
+        placeholderTextColor={props.placeholderTextColor || COLORS.placeholder}
+        {...props}
+      />
+      {icon && (
+        <TouchableOpacity onPress={onIconPress} style={styles.iconContainer}>
+          {icon}
+        </TouchableOpacity>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  input: {
+  container: {
+    flexDirection: 'row', 
+    alignItems: 'center', 
     backgroundColor: '#FFF',
-    color: COLORS.text,
-    padding: 16,
-    borderRadius: 16, // Mais arredondado
-    fontSize: 18,
-    fontWeight: '600',
+    borderRadius: 16,
     marginBottom: 16,
-    // Sombra sutil para elevação
+    paddingHorizontal: 16, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  textInput: {
+    flex: 1, 
+    color: COLORS.text,
+    paddingVertical: 16, 
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  
+  iconContainer: {
+    paddingLeft: 10, 
   },
 });
 
