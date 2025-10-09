@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useContext } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, Platform } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 import { taskTypes } from '../constants/taskTypes';
-import { TasksContext } from '../store/TasksContext'; 
+import { TasksContext } from '../store/TasksContext';
 
+// Componentes
+import AppHeader from '../components/AppHeader';
+import MascotMessage2 from '../components/MascotMessage2';
 import TaskDetailModal from '../components/TaskDetailModal';
 import AddTaskModal from '../components/AddTaskModal';
 
@@ -18,16 +21,49 @@ const CalendarScreen = ({ navigation }) => {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
+  const userData = {
+    name: 'Ana',
+    level: 3,
+    title: 'Estudante Dedicada',
+    xpProgress: 65,
+    xpToNextLevel: 150,
+  };
+
+  // --- LÓGICA DE MARCAÇÃO ATUALIZADA ---
   const markedDates = useMemo(() => {
     const marks = {};
-    tasks.forEach(task => {
-      if (!marks[task.date]) { marks[task.date] = { dots: [] }; }
-      if (!marks[task.date].dots.some(dot => dot.key === task.id)) {
-        marks[task.date].dots.push({ key: task.id, color: task.color });
+    
+    // Define a prioridade dos tipos de tarefa
+    const priority = { 'prova': 1, 'apresentacao': 2, 'trabalho': 3, 'reuniao': 4 };
+
+    // Agrupa as tarefas por data
+    const tasksByDate = tasks.reduce((acc, task) => {
+      if (!acc[task.date]) {
+        acc[task.date] = [];
       }
-    });
+      acc[task.date].push(task);
+      return acc;
+    }, {});
+
+    for (const date in tasksByDate) {
+      const tasksOnDay = tasksByDate[date];
+      
+      // Ordena as tarefas do dia pela prioridade definida
+      tasksOnDay.sort((a, b) => (priority[a.type] || 99) - (priority[b.type] || 99));
+      
+      // A tarefa mais importante (a primeira após ordenar) define a cor do fundo
+      const mostImportantTask = tasksOnDay[0];
+      
+      marks[date] = {
+        selected: true,
+        selectedColor: mostImportantTask.color,
+        // Mantemos os pontinhos para indicar se há mais de uma tarefa
+        dots: tasksOnDay.length > 1 ? tasksOnDay.map(task => ({ key: task.id, color: 'white' })) : [],
+        marked: tasksOnDay.length > 1, // 'marked' mostra os pontinhos
+      };
+    }
     return marks;
-  }, [tasks]); 
+  }, [tasks]);
 
   const handleDayPress = (day) => {
     const tasksOnDay = tasks.filter(task => task.date === day.dateString);
@@ -71,21 +107,33 @@ const CalendarScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={28} color={COLORS.marinho} />
-        </TouchableOpacity>
-        <Text style={styles.screenTitle}>Calendário de Atividades</Text>
-        <View style={styles.placeholder} /> 
-      </View>
+      <LinearGradient colors={COLORS.secondaryGradient}>
+        <AppHeader
+          navigation={navigation}
+          userData={userData}
+          showBackButton={true}
+          title="Calendário"
+          onProfilePress={() => console.log('Ir para o Perfil')}
+        />
+      </LinearGradient>
 
       <ScrollView>
+        <View style={styles.mascotContainer}>
+          <MascotMessage2 message="Os dias coloridos indicam seus compromissos. Pontinhos brancos significam mais de uma tarefa no dia!" />
+        </View>
+        
         <View style={styles.card}>
           <Calendar
             onDayPress={handleDayPress}
             markedDates={markedDates}
+            // A biblioteca agora entende a combinação de 'selected' e 'dots'
             markingType={'multi-dot'}
-            theme={{ monthTextColor: COLORS.marinho, arrowColor: COLORS.primary, todayTextColor: COLORS.primary }}
+            theme={{
+              monthTextColor: COLORS.marinho,
+              arrowColor: COLORS.primary,
+              todayTextColor: COLORS.primary,
+              selectedDayTextColor: COLORS.white, // Garante que o número do dia fique branco
+            }}
           />
         </View>
 
@@ -121,15 +169,22 @@ const CalendarScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background, paddingTop: Platform.OS === 'android' ? 25 : 0 },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray, backgroundColor: COLORS.white,
+  mascotContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
   },
-  backButton: { padding: 4 },
-  screenTitle: { ...FONTS.h2, color: COLORS.marinho },
-  placeholder: { width: 36 },
-  card: { backgroundColor: 'white', borderRadius: 16, marginHorizontal: 16, marginTop: 24, padding: 16, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 } },
+  card: { 
+    backgroundColor: 'white', 
+    borderRadius: 16, 
+    marginHorizontal: 16, 
+    marginTop: 8,
+    padding: 16, 
+    elevation: 3, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.1, 
+    shadowRadius: 5, 
+    shadowOffset: { width: 0, height: 2 } 
+  },
   legendTitle: { ...FONTS.h3, color: COLORS.marinho, marginBottom: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   legendDot: { width: 14, height: 14, borderRadius: 7, marginRight: 10 },

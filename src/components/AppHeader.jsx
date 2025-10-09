@@ -14,6 +14,10 @@ const AppHeader = ({
 }) => {
   const { logout } = useContext(AuthContext);
 
+  if (!userData) {
+    return null;
+  }
+
   return (
     <LinearGradient colors={COLORS.secondaryGradient}>
       <SafeAreaView style={styles.safeArea}>
@@ -27,10 +31,8 @@ const AppHeader = ({
               )}
             </View>
 
-            <View style={[
-              styles.centerSection,
-              customTitle ? { alignItems: 'center' } : { alignItems: 'flex-start' }
-            ]}>
+            {/* O estilo condicional foi removido daqui. O alinhamento agora é fixo no StyleSheet. */}
+            <View style={styles.centerSection}>
               {customTitle ? (
                 <Text style={styles.greeting}>{customTitle}</Text>
               ) : (
@@ -56,16 +58,18 @@ const AppHeader = ({
             </View>
           </View>
 
-          {!customTitle && userData && (
-            <View style={styles.progressSection}>
+          <View style={styles.progressSection}>
+            <View style={styles.progressRow}>
+              <Text style={styles.levelText}>Nv. {userData.level}</Text>
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${userData.xpProgress}%` }]} />
               </View>
-              <Text style={styles.progressText}>
-                {userData.xpToNextLevel - userData.xpProgress} XP para o próximo nível!
-              </Text>
+              <Text style={styles.levelText}>Nv. {userData.level + 1}</Text>
             </View>
-          )}
+            <Text style={styles.progressText}>
+              {userData.xpToNextLevel - userData.xpProgress} XP para o próximo nível!
+            </Text>
+          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -85,17 +89,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
   leftSection: {
-    flex: 0.5,
+    flex: 1,
     alignItems: 'flex-start',
   },
   centerSection: {
-    flex: 4,
+    flex: 3,
+    // --- CORREÇÃO AQUI ---
+    // Agora o alinhamento é sempre à esquerda.
+    alignItems: 'flex-start', 
   },
   rightSection: {
-    flex: 1.5, 
+    flex: 1.5,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -159,14 +165,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   progressSection: {
-    marginTop: 8,
+    marginTop: 16,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  levelText: {
+    ...FONTS.small,
+    color: COLORS.white,
+    fontWeight: 'bold',
   },
   progressBar: {
+    flex: 1,
     height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 4,
+    marginHorizontal: 8,
   },
   progressFill: {
     height: '100%',
@@ -178,6 +196,8 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     opacity: 0.8,
     fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
   },
 });
 
