@@ -91,13 +91,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leftSection: {
-    flex: 1,
+    flex: 0.5,
     alignItems: 'flex-start',
   },
   centerSection: {
     flex: 3,
-    // --- CORREÇÃO AQUI ---
-    // Agora o alinhamento é sempre à esquerda.
     alignItems: 'flex-start', 
   },
   rightSection: {
