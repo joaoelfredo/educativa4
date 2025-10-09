@@ -3,36 +3,47 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 
+const Button = ({ title, onPress, loading, variant = 'primary', style }) => {
+  const isPrimary = variant === 'primary';
+  const isBlue = variant === 'blue';
 
-const Button = ({ title, onPress, loading, type = 'primary' }) => {
-  if (type === 'primary') {
+  if (isPrimary || isBlue) {
+    const gradientColors = isPrimary
+      ? COLORS.primaryGradient   // Laranja
+      : COLORS.secondaryGradient; // Azul
+
     return (
-      <TouchableOpacity onPress={onPress} disabled={loading} style={styles.shadow}>
-        <LinearGradient
-          colors={COLORS.primaryGradient}
-          style={styles.button}
-        >
+      <TouchableOpacity onPress={onPress} disabled={loading} style={[styles.shadow, style]}>
+        <LinearGradient colors={gradientColors} style={styles.buttonContainer}>
           {loading ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.text}>{title}</Text>
+            <Text style={styles.lightText}>{title}</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
     );
   }
 
-  // Botão secundário (para links como "Criar Conta")
   return (
-     <TouchableOpacity onPress={onPress} disabled={loading}>
-        <Text style={styles.linkText}>{title}</Text>
-     </TouchableOpacity>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={loading}
+      style={[styles.buttonContainer, styles.shadow, styles.secondaryButton, style]}
+    >
+      {loading ? (
+        <ActivityIndicator color={COLORS.primary} />
+      ) : (
+        <Text style={styles.darkText}>{title}</Text>
+      )}
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  button: {
+  buttonContainer: {
     paddingVertical: 16,
+    paddingHorizontal: 24,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -43,18 +54,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
-    marginBottom: 16,
   },
-  text: {
+  secondaryButton: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  lightText: {
     ...FONTS.button,
     color: COLORS.white,
-  },
-  linkText: {
-    ...FONTS.body,
     fontWeight: '700',
-    color: COLORS.primary,
     textAlign: 'center',
-  }
+  },
+  darkText: {
+    ...FONTS.button,
+    color: COLORS.text,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 });
 
 export default Button;
