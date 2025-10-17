@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Switch, Platform, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { COLORS, FONTS } from '../constants/theme';
 import { taskTypes } from '../constants/taskTypes';
 import Button from './Button';
+import { RemindersContext } from '../store/RemindersContext';
 
 const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate }) => {
   const [title, setTitle] = useState('');
@@ -15,9 +16,18 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [addReminder, setAddReminder] = useState(false);
 
+  const [reminderTime, setReminderTime] = useState(new Date());
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  const { addReminder: addGlobalReminder } = useContext(RemindersContext);
+
   useEffect(() => {
-    // Limpa o formulário antes de preencher para evitar dados antigos
-    setTitle(''); setDate(null); setNotes(''); setType('trabalho'); setAddReminder(false);
+    setTitle(''); 
+    setDate(null); 
+    setNotes(''); 
+    setType('trabalho'); 
+    setAddReminder(false);
+    setReminderTime(new Date()); 
 
     if (editingTask) {
       setTitle(editingTask.title);
@@ -38,7 +48,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
     const selectedType = taskTypes.find(t => t.id === type);
     
     const taskData = {
-      id: editingTask ? editingTask.id : Date.now(),
+      id: editingTask ? editingTask.id : Date.now().toString(),
       title,
       date: date.toISOString().split('T')[0],
       dueDate: date.toLocaleDateString('pt-BR'),
@@ -48,7 +58,22 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
       color: selectedType.color,
       hasReminder: addReminder,
     };
-    onSubmit(taskData);
+    
+    onSubmit(taskData); 
+
+    if (addReminder) {
+      const reminderData = {
+        taskId: taskData.id,
+        taskTitle: taskData.title,
+        text: 'Lembrete para: ' + taskData.title,
+        time: formatTime(reminderTime), 
+      };
+      addGlobalReminder(reminderData);
+      Alert.alert("Sucesso!", "Tarefa e lembrete criados!");
+    } else {
+      Alert.alert("Sucesso!", "Tarefa criada!");
+    }
+    
     onClose();
   };
 
@@ -56,27 +81,23 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
     setShowDatePicker(false);
     if (newSelectedDate) setDate(newSelectedDate);
   };
+  
+  const formatTime = (time) => time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const onChangeTime = (event, newSelectedTime) => {
+    setShowTimePicker(false);
+    if (newSelectedTime) setReminderTime(newSelectedTime);
+  };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      {/* 1. O fundo escuro que, ao ser tocado, fecha o modal */}
-      <TouchableOpacity
-        style={styles.modalBackdrop}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        {/* 2. Um container para evitar que o toque no conteúdo feche o modal */}
+      <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={onClose}>
         <TouchableWithoutFeedback>
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close-circle" size={32} color={COLORS.lightGray} />
             </TouchableOpacity>
-
-            {/* 3. KeyboardAwareScrollView gerencia o scroll e o teclado APENAS dentro do modal */}
-            <KeyboardAwareScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
+            <KeyboardAwareScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <Text style={styles.title}>{editingTask ? '✏️ Editar Tarefa' : '➕ Nova Tarefa'}</Text>
               
               <Text style={styles.label}>Tipo de Tarefa</Text>
@@ -110,6 +131,25 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
                 <Switch trackColor={{ false: '#767577', true: COLORS.primary }} thumbColor={addReminder ? COLORS.primary : '#f4f3f4'} onValueChange={setAddReminder} value={addReminder} />
               </View>
 
+              {addReminder && (
+                <>
+                  <Text style={styles.label}>Horário do Lembrete</Text>
+                  <TouchableOpacity style={styles.input} onPress={() => { Keyboard.dismiss(); setShowTimePicker(true); }}>
+                    <Text style={styles.dateText}>{formatTime(reminderTime)}</Text>
+                  </TouchableOpacity>
+                  
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={reminderTime}
+                      mode="time"
+                      is24Hour={true}
+                      display="default"
+                      onChange={onChangeTime}
+                    />
+                  )}
+                </>
+              )}
+
               <View style={styles.buttonContainer}>
                 <Button title={editingTask ? 'Salvar Alterações' : 'Criar Tarefa'} onPress={handleSubmit} style={{ marginBottom: 12 }} />
                 <Button title="Cancelar" variant="secondary" onPress={onClose} />
@@ -127,7 +167,7 @@ const styles = StyleSheet.create({
     modalContent: { maxHeight: '90%', width: '90%', backgroundColor: 'white', borderRadius: 20, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 24 },
     closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
     title: { ...FONTS.h2, textAlign: 'center', marginBottom: 24, color: COLORS.marinho },
-    label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
+    label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 }, // Adicionado marginTop
     labelSwitch: { ...FONTS.body, fontWeight: '600', color: COLORS.text },
     input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
     notesInput: { height: 100, textAlignVertical: 'top' },
@@ -137,7 +177,7 @@ const styles = StyleSheet.create({
     typeButton: { borderWidth: 2, borderColor: COLORS.lightGray, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center', width: '48.5%', marginBottom: 8 },
     typeButtonIcon: { fontSize: 20 },
     typeButtonLabel: { ...FONTS.small, fontWeight: '700', marginTop: 2, color: COLORS.gray },
-    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8, marginBottom: 24 },
+    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8, marginBottom: 16 }, // Ajustado marginBottom
     buttonContainer: { marginTop: 16 },
 });
 

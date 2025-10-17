@@ -18,6 +18,7 @@ import Button from '../components/Button';
 import Mascot from '../components/Mascot';
 import { COLORS, FONTS } from '../constants/theme';
 import { isValidEmail } from '../utils/validators';
+import { registerUser } from '../services/authService'; 
 
 const CadastroScreen = ({ navigation }) => {
   const [form, setForm] = useState({
@@ -34,7 +35,7 @@ const CadastroScreen = ({ navigation }) => {
     setForm({ ...form, [key]: value });
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
       return;
@@ -47,14 +48,23 @@ const CadastroScreen = ({ navigation }) => {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('Sucesso', 'Conta criada com sucesso!', [
+
+    try {
+      await registerUser(form.name, form.email, form.password);
+
+      Alert.alert('Sucesso!', 'Sua conta foi criada. Agora é só fazer o login!', [
         { text: 'OK', onPress: () => navigation.navigate('Login') },
       ]);
-      console.log('Dados de cadastro:', form);
-    }, 1500);
+    } catch (error) {
+      console.error('Falha no cadastro:', error);
+      const errorMessage =
+        error.response?.data?.message || 'Não foi possível criar a conta. Tente novamente mais tarde.';
+      Alert.alert('Erro no Cadastro', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,7 +109,7 @@ const CadastroScreen = ({ navigation }) => {
                   <Ionicons
                     name={isPasswordVisible ? 'eye-off' : 'eye'}
                     size={24}
-                    color={COLORS.blue} 
+                    color={COLORS.blue}
                   />
                 }
                 onIconPress={() => setPasswordVisible(!isPasswordVisible)}
@@ -113,10 +123,12 @@ const CadastroScreen = ({ navigation }) => {
                   <Ionicons
                     name={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
                     size={24}
-                    color={COLORS.blue} 
+                    color={COLORS.blue}
                   />
                 }
-                onIconPress={() => setConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                onIconPress={() =>
+                  setConfirmPasswordVisible(!isConfirmPasswordVisible)
+                }
               />
               <Button
                 title="Criar Conta no EducAtiva"
@@ -182,6 +194,5 @@ const styles = StyleSheet.create({
   },
   footerText: { ...FONTS.body, color: COLORS.white },
 });
-
 
 export default CadastroScreen;
