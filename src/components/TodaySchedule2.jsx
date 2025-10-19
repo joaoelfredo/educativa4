@@ -1,86 +1,115 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
+const TodaySchedule2 = ({ date, schedule, onTaskPress }) => {
+  if (!schedule || schedule.length === 0) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📅 Hoje</Text>
+        <Text style={styles.dateText}>{date}</Text>
+        <Text style={styles.noTasksText}>Nenhuma tarefa para hoje! 🎉</Text>
+      </View>
+    );
+  }
 
-const TodaySchedule2 = ({ date, schedule }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>📋 Hoje - {date}</Text>
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>📅 Hoje</Text>
+      <Text style={styles.dateText}>{date}</Text>
       
-      <View style={styles.scheduleList}>
-        {schedule.map((item) => (
-          <View 
-            key={item.id} 
-            style={[
-              styles.scheduleItem,
-              { 
-                backgroundColor: item.backgroundColor,
-                borderLeftColor: item.color,
-                marginBottom: 12,
-              }
-            ]}
-          >
-            <View style={[styles.dot, { backgroundColor: item.color }]} />
-            <View style={styles.scheduleContent}>
-              <Text style={styles.scheduleTitle}>{item.title}</Text>
-              <Text style={[styles.scheduleTime, { color: item.color }]}>
-                {item.time} • {item.location}
-              </Text>
+      {schedule.map((task) => (
+        <TouchableOpacity
+          key={task.id}
+          style={[styles.taskItem, { borderLeftColor: task.color || COLORS.purple }]}
+          onPress={onTaskPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.taskContent}>
+            <Text style={styles.taskIcon}>{task.icon || '📝'}</Text>
+            <View style={styles.taskInfo}>
+              <Text style={styles.taskTitle}>{task.title}</Text>
+              {task.notes && (
+                <Text style={styles.taskNotes} numberOfLines={1}>
+                  {task.notes}
+                </Text>
+              )}
             </View>
           </View>
-        ))}
-      </View>
+          {task.completed && (
+            <Text style={styles.completedBadge}>✓</Text>
+          )}
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.white,
+  card: {
+    backgroundColor: 'white',
     borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
+    padding: 16,
+    marginBottom: 16,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  title: {
+  cardTitle: {
     ...FONTS.h3,
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.anil,
-    marginBottom: 16,
+    color: COLORS.marinho,
+    marginBottom: 8,
   },
-  scheduleList: {},
-  scheduleItem: {
-    borderRadius: 12,
-    padding: 16,
+  dateText: {
+    ...FONTS.body,
+    color: COLORS.gray,
+    marginBottom: 16,
+    textTransform: 'capitalize',
+  },
+  taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.gelo,
     borderLeftWidth: 4,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
   },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 16,
-  },
-  scheduleContent: {
+  taskContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  scheduleTitle: {
+  taskIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  taskInfo: {
+    flex: 1,
+  },
+  taskTitle: {
     ...FONTS.body,
     fontWeight: '600',
-    fontSize: 14,
     color: COLORS.text,
-    marginBottom: 4,
   },
-  scheduleTime: {
+  taskNotes: {
     ...FONTS.small,
-    fontSize: 12,
+    color: COLORS.gray,
+    marginTop: 2,
+  },
+  completedBadge: {
+    fontSize: 20,
+    color: COLORS.green,
+    fontWeight: 'bold',
+  },
+  noTasksText: {
+    ...FONTS.body,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 
