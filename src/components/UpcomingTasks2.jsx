@@ -1,84 +1,166 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
+const UpcomingTasks2 = ({ tasks, onTaskPress }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const upcomingTasks = tasks.filter(task => task.date > today);
 
-const UpcomingTasks2 = ({ tasks }) => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>⚡ Próximas Tarefas</Text>
-      
-      <View style={styles.taskList}>
-        {tasks.map((task) => (
-          <View 
-            key={task.id} 
-            style={[
-              styles.taskItem,
-              { 
-                backgroundColor: task.backgroundColor,
-                borderLeftColor: task.color,
-                marginBottom: 12,
-              }
-            ]}
-          >
-            <Text style={styles.taskIcon}>{task.icon}</Text>
-            <View style={styles.taskContent}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
-              <Text style={[styles.taskDueDate, { color: task.color }]}>
-                {task.dueDate}
-              </Text>
-            </View>
-          </View>
-        ))}
+  const tasksByDate = upcomingTasks.reduce((acc, task) => {
+    if (!acc[task.date]) {
+      acc[task.date] = [];
+    }
+    acc[task.date].push(task);
+    return acc;
+  }, {});
+
+  const sortedDates = Object.keys(tasksByDate).sort();
+
+  if (sortedDates.length === 0) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>📆 Próximas Tarefas</Text>
+        <Text style={styles.noTasksText}>Nenhuma tarefa futura agendada.</Text>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>📆 Próximas Tarefas</Text>
+      
+      {sortedDates.slice(0, 5).map(date => {
+        const tasksForDate = tasksByDate[date];
+        const formattedDate = new Date(date + 'T12:00:00Z').toLocaleDateString('pt-BR', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        });
+
+        return (
+          <TouchableOpacity
+            key={date}
+            style={styles.dateGroup}
+            onPress={() => onTaskPress(date)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.dateHeader}>
+              <Text style={styles.dateText}>{formattedDate}</Text>
+              <Text style={styles.taskCount}>{tasksForDate.length} tarefa(s)</Text>
+            </View>
+            
+            <View style={styles.tasksList}>
+              {tasksForDate.slice(0, 2).map(task => (
+                <View
+                  key={task.id}
+                  style={[styles.taskItem, { borderLeftColor: task.color || COLORS.purple }]}
+                >
+                  <Text style={styles.taskIcon}>{task.icon || '📝'}</Text>
+                  <Text style={styles.taskTitle} numberOfLines={1}>
+                    {task.title}
+                  </Text>
+                  {task.completed && (
+                    <Text style={styles.completedBadge}>✓</Text>
+                  )}
+                </View>
+              ))}
+              
+              {tasksForDate.length > 2 && (
+                <Text style={styles.moreTasksText}>
+                  + {tasksForDate.length - 2} mais
+                </Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+      
+      {sortedDates.length > 5 && (
+        <Text style={styles.moreTasksText}>
+          E mais {sortedDates.length - 5} dia(s) com tarefas...
+        </Text>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.white,
+  card: {
+    backgroundColor: 'white',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
+    padding: 16,
+    marginBottom: 16,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  title: {
+  cardTitle: {
     ...FONTS.h3,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.anil,
-    marginBottom: 16,
+    color: COLORS.marinho,
+    marginBottom: 12,
   },
-  taskList: {},
+  dateGroup: {
+    marginBottom: 16,
+    backgroundColor: COLORS.gelo,
+    borderRadius: 12,
+    padding: 12,
+  },
+  dateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dateText: {
+    ...FONTS.body,
+    fontWeight: '600',
+    color: COLORS.text,
+    textTransform: 'capitalize',
+  },
+  taskCount: {
+    ...FONTS.small,
+    color: COLORS.gray,
+  },
+  tasksList: {
+    gap: 6,
+  },
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    borderLeftWidth: 4,
+    backgroundColor: 'white',
+    borderLeftWidth: 3,
+    borderRadius: 6,
+    padding: 8,
   },
   taskIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  taskContent: {
-    flex: 1,
+    fontSize: 18,
+    marginRight: 8,
   },
   taskTitle: {
     ...FONTS.body,
-    fontWeight: '600',
-    fontSize: 14,
     color: COLORS.text,
-    marginBottom: 4,
+    flex: 1,
   },
-  taskDueDate: {
+  completedBadge: {
+    fontSize: 16,
+    color: COLORS.green,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  moreTasksText: {
     ...FONTS.small,
-    fontSize: 12,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  noTasksText: {
+    ...FONTS.body,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 

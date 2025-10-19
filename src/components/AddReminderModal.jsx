@@ -16,11 +16,9 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
 
-  // EFEITO PARA PREENCHER O FORMULÁRIO
   useEffect(() => {
     if (visible) {
       if (editingReminder) {
-        // Modo Edição
         setText(editingReminder.text);
         const [hour, minute] = editingReminder.time.split(':');
         const newTime = new Date();
@@ -28,7 +26,6 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
         setTime(newTime);
         setSelectedTaskId(editingReminder.taskId);
       } else {
-        // Modo Criação
         setText('');
         setTime(new Date());
         setSelectedTaskId(taskToRemind?.id || null);
@@ -50,14 +47,18 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
     }
     const taskTitle = tasks.find(task => task.id === selectedTaskId)?.title || '';
     
-    // Envia o ID de volta se estiver editando
-    onSubmit({ 
-      id: editingReminder?.id, 
+    const reminderData = {
       text, 
       time: formatTime(time), 
       taskTitle, 
       taskId: selectedTaskId 
-    });
+    };
+
+    if (editingReminder?.id) {
+      reminderData.id = editingReminder.id;
+    }
+    
+    onSubmit(reminderData);
   };
 
   return (
@@ -77,7 +78,7 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
                 <Picker
                   selectedValue={selectedTaskId}
                   onValueChange={(itemValue) => setSelectedTaskId(itemValue)}
-                  enabled={!editingReminder} // Não pode mudar a tarefa ao editar
+                  enabled={!editingReminder}
                 >
                   <Picker.Item label="Selecione uma tarefa..." value={null} />
                   {tasks.map(task => (
@@ -115,17 +116,16 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
   );
 };
 
-// ... (seus styles continuam os mesmos)
 const styles = StyleSheet.create({
-    modalBackdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-    modalContent: { maxHeight: '90%', width: '90%', backgroundColor: 'white', borderRadius: 20, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 24 },
-    closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
-    title: { ...FONTS.h2, textAlign: 'center', marginBottom: 24, color: COLORS.marinho },
-    label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 },
-    input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
-    dateText: { fontSize: 16, color: COLORS.text },
-    pickerContainer: { backgroundColor: COLORS.gelo, borderRadius: 12, justifyContent: 'center' },
-    buttonContainer: { marginTop: 24 },
+  modalBackdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  modalContent: { maxHeight: '90%', width: '90%', backgroundColor: 'white', borderRadius: 20, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 24 },
+  closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
+  title: { ...FONTS.h2, textAlign: 'center', marginBottom: 24, color: COLORS.marinho },
+  label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 },
+  input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
+  dateText: { fontSize: 16, color: COLORS.text },
+  pickerContainer: { backgroundColor: COLORS.gelo, borderRadius: 12, justifyContent: 'center' },
+  buttonContainer: { marginTop: 24 },
 });
 
 export default AddReminderModal;

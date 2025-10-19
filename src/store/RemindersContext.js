@@ -24,30 +24,43 @@ export const RemindersContext = createContext({
   reminders: [],
   addReminder: (reminderData) => {},
   updateReminder: (reminderData) => {}, 
+  deleteReminder: (reminderId) => {},
 });
 
 const RemindersProvider = ({ children }) => {
   const [reminders, setReminders] = useState(initialReminders);
 
   const addReminder = (reminderData) => {
+    // Gera um ID único para o novo lembrete
+    const newId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    
     const newReminder = {
-      id: Date.now().toString(),
+      id: newId,
       ...reminderData,
       color: COLORS.purple,
     };
+
     setReminders(prev => [...prev, newReminder]);
   };
 
   const updateReminder = (updatedReminder) => {
     setReminders(prev => 
-      prev.map(r => r.id === updatedReminder.id ? { ...r, ...updatedReminder } : r)
+      prev.map(r => r.id === updatedReminder.id 
+        ? { ...r, ...updatedReminder } 
+        : r
+      )
     );
+  };
+
+  const deleteReminder = (reminderId) => {
+    setReminders(prev => prev.filter(r => r.id !== reminderId));
   };
 
   const value = {
     reminders,
     addReminder,
     updateReminder,
+    deleteReminder,
   };
 
   return (
