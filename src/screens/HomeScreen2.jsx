@@ -1,9 +1,9 @@
-import React, { useState, useContext } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { COLORS } from '../constants/theme';
+import React, { useState, useContext } from 'react'; 
+import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
+import { COLORS, FONTS } from '../constants/theme';
 import { TasksContext } from '../store/TasksContext';
+import { RemindersContext } from '../store/RemindersContext'; 
 
-// Componentes
 import AppHeader from '../components/AppHeader';
 import MascotMessage2 from '../components/MascotMessage2';
 import QuickActions from '../components/QuickActions2';
@@ -11,6 +11,27 @@ import TodaySchedule from '../components/TodaySchedule2';
 import UpcomingTasks from '../components/UpcomingTasks2';
 import AddTaskModal from '../components/AddTaskModal';
 import TaskDetailModal from '../components/TaskDetailModal';
+
+const RemindersDoDia = ({ reminders }) => {
+  if (reminders.length === 0) {
+    return null; 
+  }
+  return (
+    <View style={styles.remindersCard}>
+      <Text style={styles.remindersTitle}>🔔 Lembretes de Hoje</Text>
+      {reminders.map(reminder => (
+        <View key={reminder.id} style={styles.reminderItem}>
+          <Text style={styles.reminderTime}>{reminder.time}</Text>
+          <View style={styles.reminderDetails}>
+            <Text style={styles.reminderTaskTitle}>{reminder.taskTitle}</Text>
+            <Text style={styles.reminderText}>{reminder.text}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 
 const HomeScreen2 = ({ navigation }) => {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -20,6 +41,8 @@ const HomeScreen2 = ({ navigation }) => {
   const [taskToEdit, setTaskToEdit] = useState(null);
   
   const { tasks, addTask, updateTask, deleteTask } = useContext(TasksContext);
+  const { reminders, addReminder } = useContext(RemindersContext); 
+
 
   const userData = {
     name: 'Ana',
@@ -29,19 +52,33 @@ const HomeScreen2 = ({ navigation }) => {
     xpToNextLevel: 150,
   };
 
-  const handleAddTask = (newTask) => {
+  const handleAddTask = (taskData) => {
+    const { hasReminder, reminderTime, ...newTaskData } = taskData;
+    
     if (taskToEdit) {
-      updateTask(newTask);
+      updateTask(newTaskData); 
       Alert.alert("Sucesso!", "Tarefa atualizada.");
-      setTaskToEdit(null);
     } else {
-      addTask(newTask);
-      Alert.alert("Sucesso!", "Nova tarefa criada.");
+      const addedTask = addTask(newTaskData); 
+      
+      if (addedTask && hasReminder) {
+        addReminder({
+          taskId: addedTask.id,
+          taskTitle: addedTask.title,
+          text: 'Lembrete para: ' + addedTask.title,
+          time: reminderTime,
+          taskDate: addedTask.date, 
+        });
+        Alert.alert("Sucesso!", "Tarefa e lembrete criados!");
+      } else if (addedTask) {
+        Alert.alert("Sucesso!", "Tarefa criada!");
+      }
     }
+    
+    setTaskToEdit(null);
     setAddModalVisible(false);
   };
 
-  // Função para abrir o modal de detalhes
   const handleOpenTaskDetail = (date) => {
     const tasksForDate = tasks.filter(task => task.date === date);
     if (tasksForDate.length > 0) {
@@ -51,7 +88,6 @@ const HomeScreen2 = ({ navigation }) => {
     }
   };
 
-  // Função para marcar tarefa como concluída
   const handleCompleteTask = (task) => {
     Alert.alert(
       "Concluir Tarefa",
@@ -70,7 +106,6 @@ const HomeScreen2 = ({ navigation }) => {
     );
   };
 
-  // Função para editar tarefa
   const handleEditTask = (task) => {
     setTaskToEdit(task);
     setDetailModalVisible(false);
@@ -80,12 +115,16 @@ const HomeScreen2 = ({ navigation }) => {
   const today = new Date().toISOString().split('T')[0];
   const tasksForToday = tasks.filter(task => task.date === today);
 
+  const remindersToday = reminders
+    .filter(r => r.taskDate === today)
+    .sort((a, b) => a.time.localeCompare(b.time)); 
+
   return (
     <View style={styles.container}>
       <AppHeader navigation={navigation} userData={userData} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <MascotMessage2 message={`Oi Ana! Você tem ${tasksForToday.length} tarefa(s) para hoje. Vamos começar?`} />
+        <MascotMessage2 message={`Oi Ana! Você tem ${tasksForToday.length} tarefa(s) e ${remindersToday.length} lembrete(s) para hoje.`} />
         
         <QuickActions
           onNewTask={() => {
@@ -94,6 +133,8 @@ const HomeScreen2 = ({ navigation }) => {
           }}
           onSetReminder={() => navigation.navigate('Reminders')}
         />
+
+        <RemindersDoDia reminders={remindersToday} />
         
         <TodaySchedule
           date={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -107,7 +148,6 @@ const HomeScreen2 = ({ navigation }) => {
         />
       </ScrollView>
       
-      {/* Modal de Adicionar/Editar Tarefa */}
       <AddTaskModal
         visible={isAddModalVisible}
         onClose={() => {
@@ -118,7 +158,6 @@ const HomeScreen2 = ({ navigation }) => {
         editingTask={taskToEdit}
       />
 
-      {/* Modal de Detalhes da Tarefa */}
       <TaskDetailModal
         visible={isDetailModalVisible}
         tasks={selectedTasks}
@@ -139,6 +178,48 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 24,
+  },
+  remindersCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  remindersTitle: {
+    ...FONTS.h3,
+    color: COLORS.marinho,
+    marginBottom: 12,
+  },
+  reminderItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    backgroundColor: COLORS.gelo,
+    padding: 12,
+    borderRadius: 10,
+  },
+  reminderTime: {
+    ...FONTS.h4,
+    color: COLORS.primary,
+    marginRight: 12,
+    width: 60, 
+  },
+  reminderDetails: {
+    flex: 1,
+  },
+  reminderTaskTitle: {
+    ...FONTS.body,
+    fontWeight: '600',
+    color: COLORS.darkGray,
+  },
+  reminderText: {
+    ...FONTS.small,
+    color: COLORS.gray,
   },
 });
 

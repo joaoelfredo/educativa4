@@ -6,7 +6,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { COLORS, FONTS } from '../constants/theme';
 import { taskTypes } from '../constants/taskTypes';
 import Button from './Button';
-import { RemindersContext } from '../store/RemindersContext';
+// Não precisamos do RemindersContext aqui
 
 const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate }) => {
   const [title, setTitle] = useState('');
@@ -19,8 +19,6 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
   const [reminderTime, setReminderTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   
-  const { addReminder: addGlobalReminder } = useContext(RemindersContext);
-
   useEffect(() => {
     setTitle(''); 
     setDate(null); 
@@ -34,12 +32,19 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
       setDate(new Date(editingTask.date + 'T12:00:00Z'));
       setNotes(editingTask.notes || '');
       setType(editingTask.type || 'trabalho');
-      setAddReminder(editingTask.hasReminder || false);
     } else if (selectedDate) {
       setDate(new Date(selectedDate + 'T12:00:00Z'));
     }
   }, [editingTask, selectedDate, visible]);
   
+
+  const formatTime = (time) => {
+    const date = new Date(time); 
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`; 
+  };
+
   const handleSubmit = () => {
     if (!title || !date) {
       Alert.alert('Atenção', 'Por favor, preencha o título e a data.');
@@ -48,7 +53,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
     const selectedType = taskTypes.find(t => t.id === type);
     
     const taskData = {
-      id: editingTask ? editingTask.id : Date.now().toString(),
+      id: editingTask ? editingTask.id : null,
       title,
       date: date.toISOString().split('T')[0],
       dueDate: date.toLocaleDateString('pt-BR'),
@@ -56,24 +61,12 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
       type: selectedType.id,
       icon: selectedType.icon,
       color: selectedType.color,
+      
       hasReminder: addReminder,
+      reminderTime: formatTime(reminderTime), 
     };
     
     onSubmit(taskData); 
-
-    if (addReminder) {
-      const reminderData = {
-        taskId: taskData.id,
-        taskTitle: taskData.title,
-        text: 'Lembrete para: ' + taskData.title,
-        time: formatTime(reminderTime), 
-      };
-      addGlobalReminder(reminderData);
-      Alert.alert("Sucesso!", "Tarefa e lembrete criados!");
-    } else {
-      Alert.alert("Sucesso!", "Tarefa criada!");
-    }
-    
     onClose();
   };
 
@@ -82,8 +75,6 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
     if (newSelectedDate) setDate(newSelectedDate);
   };
   
-  const formatTime = (time) => time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
   const onChangeTime = (event, newSelectedTime) => {
     setShowTimePicker(false);
     if (newSelectedTime) setReminderTime(newSelectedTime);
@@ -142,7 +133,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
                     <DateTimePicker
                       value={reminderTime}
                       mode="time"
-                      is24Hour={true}
+                      is24Hour={true} 
                       display="default"
                       onChange={onChangeTime}
                     />
@@ -167,7 +158,7 @@ const styles = StyleSheet.create({
     modalContent: { maxHeight: '90%', width: '90%', backgroundColor: 'white', borderRadius: 20, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 24 },
     closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 1 },
     title: { ...FONTS.h2, textAlign: 'center', marginBottom: 24, color: COLORS.marinho },
-    label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 }, // Adicionado marginTop
+    label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 }, 
     labelSwitch: { ...FONTS.body, fontWeight: '600', color: COLORS.text },
     input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
     notesInput: { height: 100, textAlignVertical: 'top' },
@@ -177,7 +168,7 @@ const styles = StyleSheet.create({
     typeButton: { borderWidth: 2, borderColor: COLORS.lightGray, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center', width: '48.5%', marginBottom: 8 },
     typeButtonIcon: { fontSize: 20 },
     typeButtonLabel: { ...FONTS.small, fontWeight: '700', marginTop: 2, color: COLORS.gray },
-    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8, marginBottom: 16 }, // Ajustado marginBottom
+    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 8, marginBottom: 16 }, 
     buttonContainer: { marginTop: 16 },
 });
 

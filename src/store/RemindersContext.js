@@ -9,6 +9,8 @@ const initialReminders = [
     text: 'Revisar capítulo 5 e 6.',
     time: '19:00',
     color: COLORS.orange,
+    taskDate: '2025-10-20', 
+    triggered: false, // <-- Propriedade de controle
   },
   {
     id: '2',
@@ -17,6 +19,8 @@ const initialReminders = [
     text: 'Finalizar os gráficos e a conclusão.',
     time: '20:30',
     color: COLORS.blue,
+    taskDate: '2025-10-21', 
+    triggered: false, // <-- Propriedade de controle
   },
 ];
 
@@ -31,18 +35,19 @@ const RemindersProvider = ({ children }) => {
   const [reminders, setReminders] = useState(initialReminders);
 
   const addReminder = (reminderData) => {
-    // Gera um ID único para o novo lembrete
     const newId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     
     const newReminder = {
       id: newId,
       ...reminderData,
       color: COLORS.purple,
+      triggered: false, // <-- Adiciona a flag em novos lembretes
     };
 
     setReminders(prev => [...prev, newReminder]);
   };
 
+  // A função updateReminder já funciona como precisamos
   const updateReminder = (updatedReminder) => {
     setReminders(prev => 
       prev.map(r => r.id === updatedReminder.id 

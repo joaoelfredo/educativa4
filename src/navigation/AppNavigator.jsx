@@ -1,11 +1,11 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react'; 
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthContext } from '../store/AuthContext';
 import { TasksProvider } from '../store/TasksContext';
-import RemindersProvider from '../store/RemindersContext'; 
-import { ActivityIndicator, View } from 'react-native';
+import RemindersProvider, { RemindersContext } from '../store/RemindersContext'; 
+import { ActivityIndicator, View, Alert } from 'react-native'; 
 
 // Telas de Autenticação
 import LoginScreen from '../screens/LoginScreen';
@@ -31,18 +31,64 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
+const formatTimeHHMM = (time) => {
+  const date = new Date(time);
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`; 
+};
+
+const MainAppWrapper = () => {
+  const { reminders, updateReminder } = useContext(RemindersContext);
+
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      checkDueReminders();
+    }, 10000); 
+
+    return () => clearInterval(timer);
+  }, [reminders]); 
+
+  const checkDueReminders = () => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentTimeStr = formatTimeHHMM(now); 
+
+    const dueReminders = reminders.filter(r => 
+      r.taskDate === todayStr &&  
+      r.time === currentTimeStr && 
+      !r.triggered                 
+    );
+
+    for (const reminder of dueReminders) {
+      Alert.alert(
+        `🔔 Lembrete: ${reminder.taskTitle}`,
+        reminder.text,
+        [{ text: 'OK' }]
+      );
+      updateReminder({ ...reminder, triggered: true });
+    }
+  };
+
+  return (
+    <Tab.Navigator
+      screenOptions={{ headerShown: false }}
+      tabBar={props => <BottomTabBar2 {...props} />}
+    >
+      <Tab.Screen name="Home" component={HomeScreen2} />
+      <Tab.Screen name="Calendar" component={CalendarScreen} />
+      <Tab.Screen name="Reminders" component={RemindersScreen} />
+      <Tab.Screen name="Rewards" component={RewardsScreen} />
+    </Tab.Navigator>
+  );
+};
+
+
 const AppTabs = () => (
   <TasksProvider>
     <RemindersProvider>
-      <Tab.Navigator
-        screenOptions={{ headerShown: false }}
-        tabBar={props => <BottomTabBar2 {...props} />}
-      >
-        <Tab.Screen name="Home" component={HomeScreen2} />
-        <Tab.Screen name="Calendar" component={CalendarScreen} />
-        <Tab.Screen name="Reminders" component={RemindersScreen} />
-        <Tab.Screen name="Rewards" component={RewardsScreen} />
-      </Tab.Navigator>
+      <MainAppWrapper />
     </RemindersProvider>
   </TasksProvider>
 );
