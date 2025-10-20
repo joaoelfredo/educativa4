@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import AppHeader from '../components/AppHeader';
 import { COLORS, FONTS } from '../constants/theme';
-
+import { AuthContext } from '../store/AuthContext';
+import { Ionicons } from '@expo/vector-icons'; 
 const ProfileScreen = ({ navigation }) => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const { logout } = useContext(AuthContext);
 
   const userData = {
     name: 'Ana Silva',
     email: 'ana.silva@email.com',
+    phone: '(85) 99999-9999', 
+    course: 'Análise e Desenvolvimento de Sistemas', 
     level: 3,
     title: 'Estudante Dedicada',
     xpProgress: 65,
@@ -23,6 +25,21 @@ const ProfileScreen = ({ navigation }) => {
     { value: 6, label: 'Medalhas', bgColor: '#F3E5F5', textColor: '#9C27B0' },
   ];
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Sair do App",
+      "Tem certeza que deseja sair?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: () => logout()
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader
@@ -33,13 +50,30 @@ const ProfileScreen = ({ navigation }) => {
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Foto e Info do Perfil */}
         <View style={styles.profileCard}>
           <View style={styles.profilePhoto}>
             <Text style={styles.profilePhotoText}>A</Text>
           </View>
           <Text style={styles.profileName}>{userData.name}</Text>
-          <Text style={styles.profileEmail}>{userData.email}</Text>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="mail-outline" size={16} color={COLORS.gray} style={styles.infoIcon} />
+            <Text style={styles.profileInfoText}>{userData.email}</Text>
+          </View>
+          {userData.phone && (
+            <View style={styles.infoRow}>
+              <Ionicons name="call-outline" size={16} color={COLORS.gray} style={styles.infoIcon} />
+              <Text style={styles.profileInfoText}>{userData.phone}</Text>
+            </View>
+          )}
+          {userData.course && ( 
+            <View style={styles.infoRow}>
+               <Ionicons name="school-outline" size={16} color={COLORS.gray} style={styles.infoIcon} />
+              <Text style={styles.profileInfoText}>{userData.course}</Text>
+            </View>
+          )}
+          {/* Fim dos novos campos */}
+
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => navigation.navigate('EditProfile')}
@@ -53,53 +87,20 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>📊 Minhas Estatísticas</Text>
           <View style={styles.statsGrid}>
             {stats.map((stat, index) => (
-              <View key={index} style={[styles.statItem, { backgroundColor: stat.bgColor }]}>
-                <Text style={[styles.statValue, { color: stat.textColor }]}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+              <View key={index} style={[styles.statItemContainer]}>
+                <View style={[styles.statItem, { backgroundColor: stat.bgColor }]}>
+                  <Text style={[styles.statValue, { color: stat.textColor }]}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Configurações */}
-        <View style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>⚙️ Configurações</Text>
-          <View style={styles.settingsList}>
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>🔔 Notificações</Text>
-              <TouchableOpacity
-                style={[styles.toggle, notificationsEnabled && styles.toggleActive]}
-                onPress={() => setNotificationsEnabled(!notificationsEnabled)}
-              >
-                <View style={[
-                  styles.toggleCircle,
-                  notificationsEnabled && styles.toggleCircleActive
-                ]} />
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>Sair do App</Text>
+        </TouchableOpacity>
 
-            <View style={styles.settingItem}>
-              <Text style={styles.settingLabel}>🌙 Modo Escuro</Text>
-              <TouchableOpacity
-                style={[styles.toggle, darkModeEnabled && styles.toggleActive]}
-                onPress={() => setDarkModeEnabled(!darkModeEnabled)}
-              >
-                <View style={[
-                  styles.toggleCircle,
-                  darkModeEnabled && styles.toggleCircleActive
-                ]} />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.settingButton}>
-              <Text style={styles.settingLabel}>🔒 Alterar Senha</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.settingButton}>
-              <Text style={styles.settingLabel}>📱 Sobre o App</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -145,18 +146,28 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.anil,
-    marginBottom: 8,
+    marginBottom: 8, 
   },
-  profileEmail: {
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8, 
+  },
+  infoIcon: {
+    marginRight: 8,
+  },
+  profileInfoText: {
     ...FONTS.body,
-    color: '#6B7280',
-    marginBottom: 16,
+    color: COLORS.gray, 
+    fontSize: 14,
   },
+
   editButton: {
     backgroundColor: COLORS.laranja,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
+    marginTop: 16, 
   },
   editButtonText: {
     ...FONTS.body,
@@ -186,13 +197,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginHorizontal: -8,
   },
-  statItem: {
+  statItemContainer: {
     width: '50%',
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  statItem: {
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8,
   },
   statValue: {
     fontSize: 30,
@@ -205,62 +218,26 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  settingsCard: {
-    backgroundColor: COLORS.white,
+  logoutButton: {
+    backgroundColor: COLORS.red,
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    elevation: 2,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 32,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  settingsList: {
-    gap: 12,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.gelo,
-    padding: 12,
-    borderRadius: 12,
-  },
-  settingButton: {
-    backgroundColor: COLORS.gelo,
-    padding: 12,
-    borderRadius: 12,
-  },
-  settingLabel: {
-    ...FONTS.body,
-    fontWeight: '600',
-    color: COLORS.anil,
-  },
-  toggle: {
-    width: 48,
-    height: 24,
-    backgroundColor: '#D1D5DB',
-    borderRadius: 12,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  toggleActive: {
-    backgroundColor: COLORS.laranja,
-  },
-  toggleCircle: {
-    width: 20,
-    height: 20,
-    backgroundColor: COLORS.white,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 3,
   },
-  toggleCircleActive: {
-    alignSelf: 'flex-end',
+  logoutButtonText: {
+    ...FONTS.button,
+    color: COLORS.white,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });
 
