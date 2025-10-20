@@ -3,12 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { API_BASE_URL } from '@env';
 
-// Detecta automaticamente qual URL usar
 const getBaseURL = () => {
   if (Platform.OS === 'web') {
     return 'http://localhost:3333';
   }
-  return API_BASE_URL; // Usa o IP do .env para mobile
+  return API_BASE_URL; 
 };
 
 const BASE_URL = getBaseURL();

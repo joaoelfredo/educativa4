@@ -2,13 +2,9 @@ import api from './api';
 
 const MOCK_API = false;
 
-/**
- * Envia as credenciais para a API de login ou simula a resposta.
- * A API deve retornar um objeto contendo o token: { token: "..." }
- */
 export const loginUser = async (email, password) => {
   if (MOCK_API) {
-    // --- INÍCIO DO CÓDIGO DE SIMULAÇÃO ---
+
     console.log('----------- MODO MOCK ATIVADO -----------');
     console.log('Simulando chamada de login para a API com:', { email, password });
 

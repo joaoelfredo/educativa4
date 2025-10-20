@@ -31,14 +31,11 @@ const CalendarScreen = ({ navigation }) => {
     xpToNextLevel: 150,
   });
 
-  // ###############################################
-  // ## LÓGICA DE markedDates CORRIGIDA
-  // ###############################################
+
   const markedDates = useMemo(() => {
     const marks = {};
     const priority = { 'prova': 1, 'apresentacao': 2, 'trabalho': 3, 'reuniao': 4 };
 
-    // 1. Agrupa TODAS as tarefas por data
     const tasksByDate = tasks.reduce((acc, task) => {
       if (!acc[task.date]) {
         acc[task.date] = [];
@@ -48,15 +45,13 @@ const CalendarScreen = ({ navigation }) => {
     }, {});
 
     for (const date in tasksByDate) {
-      // 2. Filtra APENAS as tarefas PENDENTES para este dia
+
       const pendingTasksOnDay = tasksByDate[date].filter(task => !task.completed);
 
-      // 3. Se NÃO houver tarefas PENDENTES, não marca o dia
       if (pendingTasksOnDay.length === 0) {
-        continue; // Pula para a próxima data
+        continue; 
       }
 
-      // 4. Se houver pendentes, continua a lógica com elas
       pendingTasksOnDay.sort((a, b) => (priority[a.type] || 99) - (priority[b.type] || 99));
       const mostImportantTask = pendingTasksOnDay[0];
 
@@ -64,19 +59,15 @@ const CalendarScreen = ({ navigation }) => {
         selected: true,
         selectedColor: mostImportantTask.color,
 
-        // 5. Calcula os pontinhos baseado no número de tarefas PENDENTES
         dots: pendingTasksOnDay.length > 1
               ? pendingTasksOnDay.map(task => ({ key: task.id, color: 'white' }))
-              : [], // Só mostra pontinhos se houver MAIS DE UMA pendente
+              : [], 
 
-        marked: pendingTasksOnDay.length > 1, // 'marked' também depende das pendentes
+        marked: pendingTasksOnDay.length > 1, 
       };
     }
     return marks;
-  }, [tasks]); // A dependência [tasks] está correta
-  // ###############################################
-  // ## FIM DA LÓGICA CORRIGIDA
-  // ###############################################
+  }, [tasks]); 
 
   const handleDayPress = (day) => {
     const pendingTasksOnDay = tasks.filter(task => task.date === day.dateString && !task.completed);
