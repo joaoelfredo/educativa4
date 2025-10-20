@@ -189,8 +189,8 @@ const CalendarScreen = ({ navigation }) => {
           userData={userData}
           showBackButton={true}
           title="Calendário"
-          onProfilePress={() => console.log('Ir para o Perfil')}
-        />
+          onProfilePress={() => navigation.navigate('Profile')}       
+           />
       </LinearGradient>
 
       <ScrollView>
