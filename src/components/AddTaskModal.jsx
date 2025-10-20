@@ -5,10 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { COLORS, FONTS } from '../constants/theme';
 import { taskTypes } from '../constants/taskTypes';
-import Button from './Button';
-// Não precisamos do RemindersContext aqui
+import Button from './Button'; 
 
-const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate }) => {
+const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, onDelete }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(null);
   const [notes, setNotes] = useState('');
@@ -37,9 +36,8 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
     }
   }, [editingTask, selectedDate, visible]);
   
-
   const formatTime = (time) => {
-    const date = new Date(time); 
+    const date = new Date(time);
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`; 
@@ -61,7 +59,6 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
       type: selectedType.id,
       icon: selectedType.icon,
       color: selectedType.color,
-      
       hasReminder: addReminder,
       reminderTime: formatTime(reminderTime), 
     };
@@ -133,7 +130,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
                     <DateTimePicker
                       value={reminderTime}
                       mode="time"
-                      is24Hour={true} 
+                      is24Hour={true}
                       display="default"
                       onChange={onChangeTime}
                     />
@@ -142,7 +139,28 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate })
               )}
 
               <View style={styles.buttonContainer}>
-                <Button title={editingTask ? 'Salvar Alterações' : 'Criar Tarefa'} onPress={handleSubmit} style={{ marginBottom: 12 }} />
+                <Button 
+                  title={editingTask ? 'Salvar Alterações' : 'Criar Tarefa'} 
+                  onPress={handleSubmit} 
+                  style={{ marginBottom: 12 }} 
+                />
+                
+                {editingTask && (
+                  <Button 
+                    title="Excluir Tarefa" 
+                    variant="secondary" 
+                    onPress={onDelete}
+                    style={{ 
+                      marginBottom: 12, 
+                      backgroundColor: COLORS.red, 
+                      borderColor: COLORS.red,     
+                    }}
+                    textStyle={{ 
+                      color: COLORS.white 
+                    }}
+                  />
+                )}
+                
                 <Button title="Cancelar" variant="secondary" onPress={onClose} />
               </View>
             </KeyboardAwareScrollView>
