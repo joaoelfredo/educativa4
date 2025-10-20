@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 
-const Button = ({ title, onPress, loading, variant = 'primary', style }) => {
+const Button = ({ title, onPress, loading, variant = 'primary', style, textStyle }) => {
   const isPrimary = variant === 'primary';
   const isBlue = variant === 'blue';
 
@@ -18,7 +18,7 @@ const Button = ({ title, onPress, loading, variant = 'primary', style }) => {
           {loading ? (
             <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text style={styles.lightText}>{title}</Text>
+            <Text style={[styles.lightText, textStyle]}>{title}</Text>
           )}
         </LinearGradient>
       </TouchableOpacity>
@@ -34,7 +34,7 @@ const Button = ({ title, onPress, loading, variant = 'primary', style }) => {
       {loading ? (
         <ActivityIndicator color={COLORS.primary} />
       ) : (
-        <Text style={styles.darkText}>{title}</Text>
+        <Text style={[styles.darkText, textStyle]}>{title}</Text>
       )}
     </TouchableOpacity>
   );

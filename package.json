@@ -22,6 +22,7 @@
     "expo": "54.0.13",
     "expo-doctor": "^1.17.8",
     "expo-linear-gradient": "~15.0.7",
+    "expo-notifications": "~0.32.12",
     "expo-status-bar": "~3.0.8",
     "firebase": "^12.4.0",
     "react": "19.1.0",

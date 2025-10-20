@@ -1,10 +1,20 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Alert, TouchableWithoutFeedback } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Modal, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert, 
+  TouchableWithoutFeedback,
+  ScrollView,
+  Keyboard 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { COLORS, FONTS } from '../constants/theme';
 import { TasksContext } from '../store/TasksContext';
-import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Button from './Button';
 
@@ -12,53 +22,84 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
   const { tasks } = useContext(TasksContext);
 
   const [text, setText] = useState('');
-  const [time, setTime] = useState(new Date());
-  const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+
+  const [reminderDate, setReminderDate] = useState(new Date()); 
+  const [time, setTime] = useState(new Date());
+
+  const [showDatePicker, setShowDatePicker] = useState(false); 
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     if (visible) {
       if (editingReminder) {
         setText(editingReminder.text);
-        const [hour, minute] = editingReminder.time.split(':');
-        const newTime = new Date();
-        newTime.setHours(hour, minute);
-        setTime(newTime);
         setSelectedTaskId(editingReminder.taskId);
+        
+        const [hour, minute] = editingReminder.time.split(':');
+        const savedDate = new Date(editingReminder.taskDate + 'T00:00:00');
+        const savedTime = new Date(editingReminder.taskDate + 'T00:00:00');
+        savedTime.setHours(hour, minute);
+        
+        setReminderDate(savedDate);
+        setTime(savedTime);
+        
       } else {
         setText('');
         setTime(new Date());
+        setReminderDate(new Date()); 
         setSelectedTaskId(taskToRemind?.id || null);
       }
     }
   }, [visible, editingReminder, taskToRemind]);
 
-  const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (date) => {
+    const d = new Date(date);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('pt-BR');
+  };
 
   const onChangeTime = (event, selectedDate) => {
     setShowTimePicker(false);
     if (selectedDate) setTime(selectedDate);
   };
+  
+  const onChangeDate = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) setReminderDate(selectedDate);
+  };
+
 
   const handleSubmit = () => {
-    if (!text || !time || !selectedTaskId) {
+    if (!text || !reminderDate || !time || !selectedTaskId) {
       Alert.alert('Atenção', 'Preencha todos os campos.');
       return;
     }
-    const taskTitle = tasks.find(task => task.id === selectedTaskId)?.title || '';
+    
+    const task = tasks.find(task => task.id === selectedTaskId);
+    if (!task) {
+        Alert.alert('Erro', 'Tarefa associada não encontrada.');
+        return;
+    }
     
     const reminderData = {
       text, 
-      time: formatTime(time), 
-      taskTitle, 
-      taskId: selectedTaskId 
+      time: formatTime(time),            
+      taskTitle: task.title,   
+      taskId: selectedTaskId,
+      taskDate: reminderDate.toISOString().split('T')[0], 
     };
 
     if (editingReminder?.id) {
       reminderData.id = editingReminder.id;
     }
     
-    onSubmit(reminderData);
+    onSubmit(reminderData); 
   };
 
   return (
@@ -74,17 +115,26 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
               <Text style={styles.title}>{editingReminder ? '✏️ Editar Lembrete' : '➕ Novo Lembrete'}</Text>
               
               <Text style={styles.label}>Para qual tarefa?</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedTaskId}
-                  onValueChange={(itemValue) => setSelectedTaskId(itemValue)}
-                  enabled={!editingReminder}
-                >
-                  <Picker.Item label="Selecione uma tarefa..." value={null} />
+              <View style={styles.customPickerContainer}>
+                <ScrollView nestedScrollEnabled={true}>
+                  <TouchableOpacity
+                    style={[styles.customPickerItem, selectedTaskId === null && styles.customPickerItemSelected]}
+                    onPress={() => setSelectedTaskId(null)}
+                    disabled={editingReminder}
+                  >
+                    <Text style={styles.customPickerItemText}>Selecione uma tarefa...</Text>
+                  </TouchableOpacity>
                   {tasks.map(task => (
-                    <Picker.Item key={task.id} label={task.title} value={task.id} />
+                    <TouchableOpacity
+                      key={task.id}
+                      style={[styles.customPickerItem, selectedTaskId === task.id && styles.customPickerItemSelected]}
+                      onPress={() => setSelectedTaskId(task.id)}
+                      disabled={editingReminder}
+                    >
+                      <Text style={styles.customPickerItemText}>{task.title}</Text>
+                    </TouchableOpacity>
                   ))}
-                </Picker>
+                </ScrollView>
               </View>
 
               <Text style={styles.label}>Texto do lembrete</Text>
@@ -95,11 +145,18 @@ const AddReminderModal = ({ visible, onClose, onSubmit, editingReminder, taskToR
                 onChangeText={setText}
               />
               
+              <Text style={styles.label}>Data do Lembrete</Text>
+              <TouchableOpacity style={styles.input} onPress={() => { Keyboard.dismiss(); setShowDatePicker(true); }}>
+                <Text style={styles.dateText}>{formatDate(reminderDate)}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker value={reminderDate} mode="date" display="default" onChange={onChangeDate} />
+              )}
+
               <Text style={styles.label}>Horário do lembrete</Text>
-              <TouchableOpacity style={styles.input} onPress={() => setShowTimePicker(true)}>
+              <TouchableOpacity style={styles.input} onPress={() => { Keyboard.dismiss(); setShowTimePicker(true); }}>
                 <Text style={styles.dateText}>{formatTime(time)}</Text>
               </TouchableOpacity>
-
               {showTimePicker && (
                 <DateTimePicker value={time} mode="time" is24Hour={true} display="default" onChange={onChangeTime} />
               )}
@@ -124,8 +181,28 @@ const styles = StyleSheet.create({
   label: { ...FONTS.body, fontWeight: '600', color: COLORS.text, marginBottom: 8, marginTop: 12 },
   input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
   dateText: { fontSize: 16, color: COLORS.text },
-  pickerContainer: { backgroundColor: COLORS.gelo, borderRadius: 12, justifyContent: 'center' },
   buttonContainer: { marginTop: 24 },
+  
+  customPickerContainer: {
+    backgroundColor: COLORS.gelo,
+    borderRadius: 12,
+    maxHeight: 150,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  customPickerItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  customPickerItemSelected: {
+    backgroundColor: "#9ca3af", 
+  },
+  customPickerItemText: {
+    fontSize: 16,
+    color: COLORS.text,
+  },
 });
 
 export default AddReminderModal;
