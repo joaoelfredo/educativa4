@@ -13,7 +13,6 @@ import UpcomingTasks from '../components/UpcomingTasks2';
 import AddTaskModal from '../components/AddTaskModal';
 import TaskDetailModal from '../components/TaskDetailModal';
 
-// Componente interno para mostrar os lembretes de hoje
 const RemindersDoDia = ({ reminders }) => {
   if (reminders.length === 0) return null; 
   return (
@@ -32,14 +31,12 @@ const RemindersDoDia = ({ reminders }) => {
   );
 };
 
-// Função helper de hora (essencial para o alarme)
 const formatTimeHHMM = (time) => {
   const date = new Date(time);
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`; 
 };
-
 
 const HomeScreen2 = ({ navigation }) => {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -48,19 +45,15 @@ const HomeScreen2 = ({ navigation }) => {
   const [selectedDate, setSelectedDate] = useState('');
   const [taskToEdit, setTaskToEdit] = useState(null);
   
-  // 1. Pegar 'deleteTask' do TasksContext
   const { tasks, addTask, updateTask, deleteTask } = useContext(TasksContext);
-  
-  // 2. Pegar 'deleteRemindersByTaskId' e 'updateReminder' do RemindersContext
   const { reminders, addReminder, updateReminder, deleteRemindersByTaskId } = useContext(RemindersContext); 
 
-  // Alarme interno (essencial para o pop-up)
   useEffect(() => {
     const timer = setInterval(() => {
-      checkDueRemindersWithUpdate(); // Usando a versão que chama updateReminder
+      checkDueRemindersWithUpdate();
     }, 10000); 
     return () => clearInterval(timer);
-  }, [reminders, updateReminder]); // Adicionada dependência
+  }, [reminders, updateReminder]);
 
   const checkDueRemindersWithUpdate = () => {
      const now = new Date();
@@ -77,7 +70,7 @@ const HomeScreen2 = ({ navigation }) => {
          reminder.text,
          [{ text: 'OK' }]
        );
-       updateReminder({ ...reminder, triggered: true }); // Marca como disparado
+       updateReminder({ ...reminder, triggered: true });
      }
    };
 
@@ -93,7 +86,6 @@ const HomeScreen2 = ({ navigation }) => {
     const { hasReminder, reminderTime, ...newTaskData } = taskData;
     
     if (taskToEdit) {
-      // Passa o ID correto para a função de update
       updateTask({ ...newTaskData, id: taskToEdit.id }); 
       Alert.alert("Sucesso!", "Tarefa atualizada.");
     } else {
@@ -117,7 +109,6 @@ const HomeScreen2 = ({ navigation }) => {
     setAddModalVisible(false);
   };
 
-  // 3. NOVA FUNÇÃO para lidar com a exclusão da tarefa
   const handleDeleteTask = () => {
     if (!taskToEdit) return; 
 
@@ -131,17 +122,14 @@ const HomeScreen2 = ({ navigation }) => {
           style: "destructive", 
           onPress: () => {
             try {
-              // Exclui os lembretes primeiro
               deleteRemindersByTaskId(taskToEdit.id); 
-              // Depois exclui a tarefa
               deleteTask(taskToEdit.id);
               
               setAddModalVisible(false);
               setTaskToEdit(null);
               Alert.alert("Sucesso!", "Tarefa e lembretes associados foram excluídos.");
-
             } catch (error) {
-              console.error("Erro ao excluir tarefa:", error); // Adiciona log de erro
+              console.error("Erro ao excluir tarefa:", error);
               Alert.alert("Erro", "Não foi possível excluir a tarefa.");
             }
           }
@@ -149,7 +137,6 @@ const HomeScreen2 = ({ navigation }) => {
       ]
     );
   };
-
 
   const handleOpenTaskDetail = (date) => {
     const tasksForDate = tasks.filter(task => task.date === date);
@@ -180,8 +167,8 @@ const HomeScreen2 = ({ navigation }) => {
 
   const handleEditTask = (task) => {
     setTaskToEdit(task);
-    setDetailModalVisible(false); // Fecha o modal de detalhes (se estiver aberto)
-    setAddModalVisible(true);     // Abre o modal de Add/Edit
+    setDetailModalVisible(false);
+    setAddModalVisible(true);
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -192,7 +179,11 @@ const HomeScreen2 = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <AppHeader navigation={navigation} userData={userData} />
+      <AppHeader 
+        navigation={navigation} 
+        userData={userData}
+        onProfilePress={() => navigation.navigate('Profile')} 
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
          <MascotMessage2 message={`Oi Ana! Você tem ${tasksForToday.length} tarefa(s) e ${remindersToday.length} lembrete(s) para hoje.`} />
@@ -215,7 +206,6 @@ const HomeScreen2 = ({ navigation }) => {
          />
       </ScrollView>
       
-      {/* 4. Passar a função 'handleDeleteTask' como prop 'onDelete' */}
       <AddTaskModal
         visible={isAddModalVisible}
         onClose={() => {
@@ -224,7 +214,7 @@ const HomeScreen2 = ({ navigation }) => {
         }}
         onSubmit={handleAddTask}
         editingTask={taskToEdit}
-        onDelete={handleDeleteTask} // <-- Passando a função de exclusão
+        onDelete={handleDeleteTask}
       />
 
       <TaskDetailModal
