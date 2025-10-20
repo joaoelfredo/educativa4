@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 import { taskTypes } from '../constants/taskTypes';
 import { TasksContext } from '../store/TasksContext';
+import { RemindersContext } from '../store/RemindersContext';
 
 // Componentes
 import AppHeader from '../components/AppHeader';
@@ -14,6 +15,7 @@ import AddTaskModal from '../components/AddTaskModal';
 
 const CalendarScreen = ({ navigation }) => {
   const { tasks, addTask, updateTask, deleteTask } = useContext(TasksContext);
+  const { addReminder, deleteRemindersByTaskId } = useContext(RemindersContext);
 
   const [isDetailModalVisible, setDetailModalVisible] = useState(false);
   const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -21,22 +23,22 @@ const CalendarScreen = ({ navigation }) => {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
-  const userData = {
+  const [userData, setUserData] = useState({
     name: 'Ana',
     level: 3,
     title: 'Estudante Dedicada',
     xpProgress: 65,
     xpToNextLevel: 150,
-  };
+  });
 
-  // --- LÓGICA DE MARCAÇÃO ATUALIZADA ---
+  // ###############################################
+  // ## LÓGICA DE markedDates CORRIGIDA
+  // ###############################################
   const markedDates = useMemo(() => {
     const marks = {};
-    
-    // Define a prioridade dos tipos de tarefa
     const priority = { 'prova': 1, 'apresentacao': 2, 'trabalho': 3, 'reuniao': 4 };
 
-    // Agrupa as tarefas por data
+    // 1. Agrupa TODAS as tarefas por data
     const tasksByDate = tasks.reduce((acc, task) => {
       if (!acc[task.date]) {
         acc[task.date] = [];
@@ -46,29 +48,41 @@ const CalendarScreen = ({ navigation }) => {
     }, {});
 
     for (const date in tasksByDate) {
-      const tasksOnDay = tasksByDate[date];
-      
-      // Ordena as tarefas do dia pela prioridade definida
-      tasksOnDay.sort((a, b) => (priority[a.type] || 99) - (priority[b.type] || 99));
-      
-      // A tarefa mais importante (a primeira após ordenar) define a cor do fundo
-      const mostImportantTask = tasksOnDay[0];
-      
+      // 2. Filtra APENAS as tarefas PENDENTES para este dia
+      const pendingTasksOnDay = tasksByDate[date].filter(task => !task.completed);
+
+      // 3. Se NÃO houver tarefas PENDENTES, não marca o dia
+      if (pendingTasksOnDay.length === 0) {
+        continue; // Pula para a próxima data
+      }
+
+      // 4. Se houver pendentes, continua a lógica com elas
+      pendingTasksOnDay.sort((a, b) => (priority[a.type] || 99) - (priority[b.type] || 99));
+      const mostImportantTask = pendingTasksOnDay[0];
+
       marks[date] = {
         selected: true,
         selectedColor: mostImportantTask.color,
-        // Mantemos os pontinhos para indicar se há mais de uma tarefa
-        dots: tasksOnDay.length > 1 ? tasksOnDay.map(task => ({ key: task.id, color: 'white' })) : [],
-        marked: tasksOnDay.length > 1, // 'marked' mostra os pontinhos
+
+        // 5. Calcula os pontinhos baseado no número de tarefas PENDENTES
+        dots: pendingTasksOnDay.length > 1
+              ? pendingTasksOnDay.map(task => ({ key: task.id, color: 'white' }))
+              : [], // Só mostra pontinhos se houver MAIS DE UMA pendente
+
+        marked: pendingTasksOnDay.length > 1, // 'marked' também depende das pendentes
       };
     }
     return marks;
-  }, [tasks]);
+  }, [tasks]); // A dependência [tasks] está correta
+  // ###############################################
+  // ## FIM DA LÓGICA CORRIGIDA
+  // ###############################################
 
   const handleDayPress = (day) => {
-    const tasksOnDay = tasks.filter(task => task.date === day.dateString);
-    if (tasksOnDay.length > 0) {
-      setSelectedTasks(tasksOnDay);
+    const pendingTasksOnDay = tasks.filter(task => task.date === day.dateString && !task.completed);
+    if (pendingTasksOnDay.length > 0) {
+      setSelectedTasks(pendingTasksOnDay);
+      setSelectedDate(day.dateString);
       setDetailModalVisible(true);
     } else {
       setSelectedDate(day.dateString);
@@ -77,14 +91,37 @@ const CalendarScreen = ({ navigation }) => {
     }
   };
 
-  const handleCompleteTask = (taskToDelete) => {
-    deleteTask(taskToDelete.id);
-    if (selectedTasks.length === 1 && selectedTasks[0].id === taskToDelete.id) {
-      setDetailModalVisible(false);
-    } else {
-      setSelectedTasks(prev => prev.filter(task => task.id !== taskToDelete.id));
-    }
-    Alert.alert("Parabéns!", `Tarefa "${taskToDelete.title}" concluída! Você ganhou 10 XP!`);
+  const handleCompleteTaskOnDetail = (taskToComplete) => {
+     Alert.alert(
+      "Concluir Tarefa",
+      `Tem certeza que deseja marcar "${taskToComplete.title}" como concluída?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Concluir",
+          onPress: () => {
+             try {
+                deleteRemindersByTaskId(taskToComplete.id);
+                updateTask({ ...taskToComplete, completed: true });
+
+                const remainingTasks = selectedTasks.filter(task => task.id !== taskToComplete.id);
+                setSelectedTasks(remainingTasks);
+
+                if (remainingTasks.length === 0) {
+                    setDetailModalVisible(false);
+                }
+
+                Alert.alert("Parabéns!", `Tarefa "${taskToComplete.title}" concluída! Você ganhou 10 XP! 🎉`);
+                setUserData(prev => ({ ...prev, xpProgress: prev.xpProgress + 10 }));
+
+             } catch (error) {
+                console.error("Erro ao concluir tarefa:", error);
+                Alert.alert("Erro", "Não foi possível marcar a tarefa como concluída.");
+             }
+          }
+        }
+      ]
+    );
   };
 
   const handleOpenEditModal = (task) => {
@@ -94,16 +131,64 @@ const CalendarScreen = ({ navigation }) => {
   };
 
   const handleSubmitTask = (taskData) => {
+    const { hasReminder, reminderTime, ...newTaskData } = taskData;
+
     if (taskToEdit) {
-      updateTask(taskData);
+      updateTask({ ...newTaskData, id: taskToEdit.id });
       Alert.alert("Sucesso", "Tarefa atualizada!");
     } else {
-      addTask(taskData);
-      Alert.alert("Sucesso", "Nova tarefa criada!");
+      const addedTask = addTask(newTaskData);
+
+      if (addedTask && hasReminder) {
+        addReminder({
+          taskId: addedTask.id,
+          taskTitle: addedTask.title,
+          text: 'Lembrete para: ' + addedTask.title,
+          time: reminderTime,
+          taskDate: addedTask.date,
+        });
+        Alert.alert("Sucesso", "Nova tarefa e lembrete criados!");
+      } else if (addedTask) {
+        Alert.alert("Sucesso", "Nova tarefa criada!");
+      } else {
+        Alert.alert("Erro", "Não foi possível criar a tarefa.");
+      }
     }
+
     setTaskToEdit(null);
     setAddModalVisible(false);
   };
+
+  const handleDeleteTaskOnEdit = () => {
+    if (!taskToEdit) return;
+
+    Alert.alert(
+      "Excluir Tarefa",
+      `Tem certeza que deseja excluir "${taskToEdit.title}"? Todos os lembretes associados a ela também serão excluídos.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: () => {
+            try {
+              deleteRemindersByTaskId(taskToEdit.id);
+              deleteTask(taskToEdit.id);
+
+              setAddModalVisible(false);
+              setTaskToEdit(null);
+              Alert.alert("Sucesso!", "Tarefa e lembretes associados foram excluídos.");
+
+            } catch (error) {
+              console.error("Erro ao excluir tarefa:", error);
+              Alert.alert("Erro", "Não foi possível excluir a tarefa.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -119,20 +204,20 @@ const CalendarScreen = ({ navigation }) => {
 
       <ScrollView>
         <View style={styles.mascotContainer}>
-          <MascotMessage2 message="Os dias coloridos indicam seus compromissos. Pontinhos brancos significam mais de uma tarefa no dia!" />
+          <MascotMessage2 message="Os dias coloridos indicam seus compromissos pendentes. Pontinhos brancos significam mais de uma tarefa pendente no dia!" />
         </View>
-        
+
         <View style={styles.card}>
           <Calendar
             onDayPress={handleDayPress}
             markedDates={markedDates}
-            // A biblioteca agora entende a combinação de 'selected' e 'dots'
             markingType={'multi-dot'}
             theme={{
               monthTextColor: COLORS.marinho,
               arrowColor: COLORS.primary,
               todayTextColor: COLORS.primary,
-              selectedDayTextColor: COLORS.white, // Garante que o número do dia fique branco
+              selectedDayTextColor: COLORS.white,
+              textDisabledColor: COLORS.lightGray,
             }}
           />
         </View>
@@ -148,20 +233,24 @@ const CalendarScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <TaskDetailModal 
+      {/* Modal de Detalhes da Tarefa */}
+      <TaskDetailModal
         visible={isDetailModalVisible}
         tasks={selectedTasks}
-        date={selectedTasks.length > 0 ? selectedTasks[0].date : ''}
+        date={selectedDate || (selectedTasks.length > 0 ? selectedTasks[0].date : '')}
         onClose={() => setDetailModalVisible(false)}
-        onComplete={handleCompleteTask}
+        onComplete={handleCompleteTaskOnDetail}
         onEdit={handleOpenEditModal}
       />
-      <AddTaskModal 
+
+      {/* Modal de Adicionar/Editar Tarefa */}
+      <AddTaskModal
         visible={isAddModalVisible}
-        onClose={() => { setAddModalVisible(false); setTaskToEdit(null); }}
+        onClose={() => { setAddModalVisible(false); setTaskToEdit(null); setSelectedDate(null); }}
         onSubmit={handleSubmitTask}
         editingTask={taskToEdit}
         selectedDate={selectedDate}
+        onDelete={handleDeleteTaskOnEdit}
       />
     </SafeAreaView>
   );
@@ -173,17 +262,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 16,
   },
-  card: { 
-    backgroundColor: 'white', 
-    borderRadius: 16, 
-    marginHorizontal: 16, 
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    marginHorizontal: 16,
     marginTop: 8,
-    padding: 16, 
-    elevation: 3, 
-    shadowColor: '#000', 
-    shadowOpacity: 0.1, 
-    shadowRadius: 5, 
-    shadowOffset: { width: 0, height: 2 } 
+    padding: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 }
   },
   legendTitle: { ...FONTS.h3, color: COLORS.marinho, marginBottom: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },

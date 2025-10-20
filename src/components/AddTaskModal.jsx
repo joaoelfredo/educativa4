@@ -9,7 +9,7 @@ import Button from './Button';
 
 const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, onDelete }) => {
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(null);
+  const [date, setDate] = useState(null); 
   const [notes, setNotes] = useState('');
   const [type, setType] = useState('trabalho');
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -20,7 +20,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
   
   useEffect(() => {
     setTitle(''); 
-    setDate(null); 
+    setDate(null);
     setNotes(''); 
     setType('trabalho'); 
     setAddReminder(false);
@@ -28,11 +28,13 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
 
     if (editingTask) {
       setTitle(editingTask.title);
-      setDate(new Date(editingTask.date + 'T12:00:00Z'));
+      setDate(new Date(editingTask.date + 'T00:00:00')); 
       setNotes(editingTask.notes || '');
       setType(editingTask.type || 'trabalho');
     } else if (selectedDate) {
-      setDate(new Date(selectedDate + 'T12:00:00Z'));
+      setDate(new Date(selectedDate + 'T00:00:00'));
+    } else {
+        setDate(new Date()); 
     }
   }, [editingTask, selectedDate, visible]);
   
@@ -44,17 +46,22 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
   };
 
   const handleSubmit = () => {
-    if (!title || !date) {
+    if (!title || !date) { 
       Alert.alert('Atenção', 'Por favor, preencha o título e a data.');
       return;
     }
     const selectedType = taskTypes.find(t => t.id === type);
     
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); 
+    const day = String(date.getDate()).padStart(2, '0');
+    const localDateString = `${year}-${month}-${day}`; // Formato "YYYY-MM-DD"
+
     const taskData = {
       id: editingTask ? editingTask.id : null,
       title,
-      date: date.toISOString().split('T')[0],
-      dueDate: date.toLocaleDateString('pt-BR'),
+      date: localDateString, 
+      dueDate: date.toLocaleDateString('pt-BR'), 
       notes: notes,
       type: selectedType.id,
       icon: selectedType.icon,
@@ -68,19 +75,27 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
   };
 
   const onChangeDate = (event, newSelectedDate) => {
-    setShowDatePicker(false);
-    if (newSelectedDate) setDate(newSelectedDate);
+    setShowDatePicker(Platform.OS === 'ios'); 
+    if (newSelectedDate) {
+        setDate(newSelectedDate); 
+    } else if (Platform.OS === 'android') {
+         setShowDatePicker(false);
+    }
   };
   
   const onChangeTime = (event, newSelectedTime) => {
-    setShowTimePicker(false);
-    if (newSelectedTime) setReminderTime(newSelectedTime);
+    setShowTimePicker(Platform.OS === 'ios'); 
+    if (newSelectedTime) {
+        setReminderTime(newSelectedTime);
+    } else if (Platform.OS === 'android'){
+        setShowTimePicker(false);
+    }
   };
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
       <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={onClose}>
-        <TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalContent}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Ionicons name="close-circle" size={32} color={COLORS.lightGray} />

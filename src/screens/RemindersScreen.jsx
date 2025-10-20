@@ -92,7 +92,7 @@ const RemindersScreen = ({ navigation }) => {
 
             <ScrollView>
                 <View style={styles.mascotContainer}>
-                    <MascotMessage2 message="Adicione, edite clicando no texto ou exclua seus lembretes!" />
+                    <MascotMessage2 message="Lembretes ajudam a organizar melhor seus estudos. Gerencie seus lembretes aqui!" />
                 </View>
 
                 <View style={styles.card}>
