@@ -17,6 +17,8 @@ import HomeScreen2 from '../screens/HomeScreen2';
 import CalendarScreen from '../screens/CalendarScreen';
 import RemindersScreen from '../screens/RemindersScreen';
 import RewardsScreen from '../screens/RewardsScreen';
+import ProfileScreen from '../screens/ProfileScreen'; // NOVO
+import EditProfileScreen from '../screens/EditProfileScreen'; // NOVO
 
 import BottomTabBar2 from '../components/BottomTabBar2';
 
@@ -38,9 +40,17 @@ const formatTimeHHMM = (time) => {
   return `${hours}:${minutes}`; 
 };
 
+// Stack para Home com navegação para Profile
+const HomeStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="HomeMain" component={HomeScreen2} />
+    <Stack.Screen name="Profile" component={ProfileScreen} />
+    <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+  </Stack.Navigator>
+);
+
 const MainAppWrapper = () => {
   const { reminders, updateReminder } = useContext(RemindersContext);
-
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -76,14 +86,13 @@ const MainAppWrapper = () => {
       screenOptions={{ headerShown: false }}
       tabBar={props => <BottomTabBar2 {...props} />}
     >
-      <Tab.Screen name="Home" component={HomeScreen2} />
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Reminders" component={RemindersScreen} />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
     </Tab.Navigator>
   );
 };
-
 
 const AppTabs = () => (
   <TasksProvider>
