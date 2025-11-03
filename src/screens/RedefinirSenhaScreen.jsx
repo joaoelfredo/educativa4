@@ -11,55 +11,63 @@ import {
     Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import api from '../services/api';
+import { Ionicons } from '@expo/vector-icons';
+import api from '../services/api'; 
 
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Mascot from '../components/Mascot';
 import { COLORS, FONTS } from '../constants/theme';
-import { isValidEmail } from '../utils/validators';
 
-const RecuperacaoSenhaScreen = ({ navigation }) => {
-    const [email, setEmail] = useState('');
+const RedefinirSenhaScreen = ({ navigation, route }) => {
+    
+    const { token } = route.params || {}; 
+
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    const [isPasswordVisible, setPasswordVisible] = useState(false);
+    const [isConfirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
-    const handleRecovery = async () => {
-        if (!email) {
-            Alert.alert('Atenção', 'Por favor, digite seu e-mail.');
+    const handleResetPassword = async () => {
+        if (!token) {
+            Alert.alert('Erro', 'Token de recuperação inválido ou não encontrado. Por favor, tente novamente pelo link do seu e-mail.');
             return;
         }
-        if (!isValidEmail(email)) {
-            Alert.alert('E-mail Inválido', 'Por favor, insira um formato de e-mail válido.');
+        if (!password || !confirmPassword) {
+            Alert.alert('Atenção', 'Por favor, preencha e confirme sua nova senha.');
             return;
         }
-
+        if (password !== confirmPassword) {
+            Alert.alert('Erro', 'As senhas não coincidem.');
+            return;
+        }
+        if (password.length < 6) {
+             Alert.alert('Senha Fraca', 'Sua nova senha deve ter pelo menos 6 caracteres.');
+            return;
+        }
+        
         setLoading(true);
-
+        
         try {
-            const response = await api.post('/auth/forgot-password', {
-                email: email,
+            const response = await api.patch('/auth/reset-password-confirm', {
+                token: token,
+                newPassword: password,
+                confirmNewPassword: confirmPassword
             });
 
-            const { resetToken: token } = response.data; 
-
-            if (!token) {
-                throw new Error("O servidor não retornou um token de recuperação.");
-            }
-
             Alert.alert(
-                'Solicitação Aceita!',
-                'Sua solicitação foi processada. Vamos redefinir sua senha agora.',
+                'Sucesso!',
+                response.data.message || 'Sua senha foi redefinida. Você já pode fazer login.',
                 [
-                    { 
-                        text: 'OK', 
-                        onPress: () => navigation.navigate('RedefinirSenha', { token: token }) 
-                    }
+                    { text: 'OK', onPress: () => navigation.navigate('Login') }
                 ]
             );
 
         } catch (error) {
-            const errorMessage = error.message || error.response?.data?.message || 'Não foi possível processar a solicitação.';
-            console.error("Erro ao solicitar recuperação:", errorMessage);
+            console.error("Erro ao redefinir senha:", error.response?.data);
+            const errorMessage = error.response?.data?.message || 'Token inválido/expirado ou erro no servidor.';
             Alert.alert('Erro', errorMessage);
         } finally {
             setLoading(false);
@@ -79,24 +87,46 @@ const RecuperacaoSenhaScreen = ({ navigation }) => {
                     >
                         <View style={styles.header}>
                             <Mascot width={128} height={128} />
-                            <Text style={styles.title}>Recuperar Senha</Text>
+                            <Text style={styles.title}>Redefinir Senha</Text>
                             <Text style={styles.subtitle}>
-                                Não se preocupe! Vamos te ajudar a voltar 🔑
+                                Crie uma nova senha forte para sua conta. 🔒
                             </Text>
                         </View>
 
                         <View style={styles.form}>
                             <Input
-                                placeholder="📧 Digite seu e-mail"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
+                                placeholder="🔒 Digite sua nova senha"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!isPasswordVisible}
+                                icon={
+                                    <Ionicons
+                                        name={isPasswordVisible ? 'eye-off' : 'eye'}
+                                        size={24}
+                                        color={COLORS.blue}
+                                    />
+                                }
+                                onIconPress={() => setPasswordVisible(!isPasswordVisible)}
+                            />
+                            
+                            <Input
+                                placeholder="🔒 Confirme sua nova senha"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry={!isConfirmPasswordVisible}
+                                icon={
+                                    <Ionicons
+                                        name={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
+                                        size={24}
+                                        color={COLORS.blue}
+                                    />
+                                }
+                                onIconPress={() => setConfirmPasswordVisible(!isConfirmPasswordVisible)}
                             />
 
                             <Button
-                                title="Solicitar Recuperação"
-                                onPress={handleRecovery}
+                                title="Salvar Nova Senha"
+                                onPress={handleResetPassword}
                                 loading={loading}
                             />
                         </View>
@@ -168,4 +198,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default RecuperacaoSenhaScreen;
+export default RedefinirSenhaScreen;

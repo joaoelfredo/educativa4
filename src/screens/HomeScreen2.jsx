@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Alert, Text } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 import { TasksContext } from '../store/TasksContext';
 import { RemindersContext } from '../store/RemindersContext'; 
+import { AuthContext } from '../store/AuthContext';
 
 // Componentes
 import AppHeader from '../components/AppHeader';
@@ -47,6 +48,7 @@ const HomeScreen2 = ({ navigation }) => {
   
   const { tasks, addTask, updateTask, deleteTask } = useContext(TasksContext);
   const { reminders, addReminder, updateReminder, deleteRemindersByTaskId } = useContext(RemindersContext); 
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -75,7 +77,7 @@ const HomeScreen2 = ({ navigation }) => {
    };
 
   const userData = {
-    name: 'Ana',
+    name: user ? user.name : 'Carregando...',
     level: 3,
     title: 'Estudante Dedicada',
     xpProgress: 65,
@@ -186,7 +188,7 @@ const HomeScreen2 = ({ navigation }) => {
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-         <MascotMessage2 message={`Oi Ana! Você tem ${tasksForToday.length} tarefa(s) e ${remindersToday.length} lembrete(s) para hoje.`} />
+         <MascotMessage2 message={`Oi ${user ? user.name : ''}! Você tem ${tasksForToday.length} tarefa(s) e ${remindersToday.length} lembrete(s) para hoje.`} />
          <QuickActions
            onNewTask={() => {
              setTaskToEdit(null);
