@@ -2,49 +2,47 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
+// Adicionada a prop 'onTaskPress'
 const TodaySchedule2 = ({ date, schedule, onTaskPress }) => {
-  if (!schedule || schedule.length === 0) {
-    return (
+  return (
+    // Envolvemos o card inteiro em um TouchableOpacity
+    <TouchableOpacity onPress={onTaskPress} activeOpacity={0.7}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>📅 Hoje</Text>
         <Text style={styles.dateText}>{date}</Text>
-        <Text style={styles.noTasksText}>Nenhuma tarefa para hoje! 🎉</Text>
-      </View>
-    );
-  }
 
-  return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>📅 Hoje</Text>
-      <Text style={styles.dateText}>{date}</Text>
-      
-      {schedule.map((task) => (
-        <TouchableOpacity
-          key={task.id}
-          style={[styles.taskItem, { borderLeftColor: task.color || COLORS.purple }]}
-          onPress={onTaskPress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.taskContent}>
-            <Text style={styles.taskIcon}>{task.icon || '📝'}</Text>
-            <View style={styles.taskInfo}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
-              {task.notes && (
-                <Text style={styles.taskNotes} numberOfLines={1}>
-                  {task.notes}
-                </Text>
-              )}
-            </View>
+        {(!schedule || schedule.length === 0) ? (
+          <Text style={styles.noTasksText}>Nenhuma tarefa para hoje! 🎉</Text>
+        ) : (
+          <View style={styles.taskList}>
+            {schedule.map((task) => (
+              // Cada item de tarefa agora é apenas visual
+              <View
+                key={task.id}
+                style={[styles.taskItem, { borderLeftColor: task.color || COLORS.purple }]}
+              >
+                <Text style={styles.taskIcon}>{task.icon || '📝'}</Text>
+                <View style={styles.taskInfo}>
+                  <Text style={styles.taskTitle} numberOfLines={1}>{task.title}</Text>
+                  {task.notes && (
+                    <Text style={styles.taskNotes} numberOfLines={1}>
+                      {task.notes}
+                    </Text>
+                  )}
+                </View>
+                {task.completed && (
+                  <Text style={styles.completedBadge}>✓</Text>
+                )}
+              </View>
+            ))}
           </View>
-          {task.completed && (
-            <Text style={styles.completedBadge}>✓</Text>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 };
 
+// (Seus estilos do TodaySchedule2)
 const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
@@ -53,9 +51,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
   },
   cardTitle: {
     ...FONTS.h3,
@@ -68,6 +66,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textTransform: 'capitalize',
   },
+  taskList: {},
   taskItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -77,11 +76,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
-  },
-  taskContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   taskIcon: {
     fontSize: 24,
