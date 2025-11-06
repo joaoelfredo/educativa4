@@ -10,6 +10,7 @@ import { ActivityIndicator, View, Alert } from 'react-native';
 import LoginScreen from '../screens/LoginScreen';
 import CadastroScreen from '../screens/CadastroScreen';
 import RecuperacaoSenhaScreen from '../screens/RecuperacaoSenhaScreen';
+import RedefinirSenhaScreen from '../screens/RedefinirSenhaScreen';
 
 import HomeScreen2 from '../screens/HomeScreen2';
 import CalendarScreen from '../screens/CalendarScreen';
@@ -29,6 +30,7 @@ const AuthStack = () => (
     <AuthStackNav.Screen name="Login" component={LoginScreen} />
     <AuthStackNav.Screen name="Cadastro" component={CadastroScreen} />
     <AuthStackNav.Screen name="RecuperacaoSenha" component={RecuperacaoSenhaScreen} />
+    <AuthStackNav.Screen name="RedefinirSenha" component={RedefinirSenhaScreen} />
   </AuthStackNav.Navigator>
 );
 

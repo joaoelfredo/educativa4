@@ -1,21 +1,29 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Platform, ActivityIndicator } from 'react-native'; // Adicionado ActivityIndicator
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { AuthContext } from '../store/AuthContext';
+import { AuthContext } from '../store/AuthContext'; 
 import { COLORS, FONTS } from '../constants/theme';
 
 const AppHeader = ({
-  userData,
   navigation,
   onProfilePress,
   showBackButton = false,
   title: customTitle,
 }) => {
-  const { logout } = useContext(AuthContext);
 
-  if (!userData) {
-    return null;
+  const { user, logout } = useContext(AuthContext);
+
+  if (!user) {
+    return (
+      <LinearGradient colors={COLORS.secondaryGradient}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={[styles.container, { height: 60, justifyContent: 'center' }]}>
+            <ActivityIndicator size="small" color={COLORS.white} />
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    );
   }
 
   return (
@@ -31,14 +39,13 @@ const AppHeader = ({
               )}
             </View>
 
-            {/* O estilo condicional foi removido daqui. O alinhamento agora é fixo no StyleSheet. */}
             <View style={styles.centerSection}>
               {customTitle ? (
                 <Text style={styles.greeting}>{customTitle}</Text>
               ) : (
                 <>
-                  <Text style={styles.greeting}>Olá, {userData.name}! 👋</Text>
-                  <Text style={styles.subtitle}>Nível {userData.level} • {userData.title}</Text>
+                  <Text style={styles.greeting}>Olá, {user.name}! 👋</Text>
+                  <Text style={styles.subtitle}>Nível {user.level || 1} • {user.title || 'Estudante'}</Text>
                 </>
               )}
             </View>
@@ -52,7 +59,7 @@ const AppHeader = ({
                   <Text style={styles.profileIconText}>👤</Text>
                 </View>
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{userData.level}</Text>
+                  <Text style={styles.badgeText}>{user.level || 1}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -60,14 +67,15 @@ const AppHeader = ({
 
           <View style={styles.progressSection}>
             <View style={styles.progressRow}>
-              <Text style={styles.levelText}>Nv. {userData.level}</Text>
+              <Text style={styles.levelText}>Nv. {user.level || 1}</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${userData.xpProgress}%` }]} />
+                <View style={[styles.progressFill, { width: `${user.xpProgress || 0}%` }]} />
               </View>
-              <Text style={styles.levelText}>Nv. {userData.level + 1}</Text>
+              <Text style={styles.levelText}>Nv. {(user.level || 1) + 1}</Text>
             </View>
             <Text style={styles.progressText}>
-              {userData.xpToNextLevel - userData.xpProgress} XP para o próximo nível!
+              {/* Calcula XP restante (assumindo 100 por nível se não houver) */}
+              {(user.xpToNextLevel || 100) - (user.xpProgress || 0)} XP para o próximo nível!
             </Text>
           </View>
         </View>
@@ -96,7 +104,7 @@ const styles = StyleSheet.create({
   },
   centerSection: {
     flex: 3,
-    alignItems: 'flex-start', 
+    alignItems: 'flex-start',
   },
   rightSection: {
     flex: 1.5,

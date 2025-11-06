@@ -1,73 +1,100 @@
-import React from 'react';
-import { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginUser, registerUser } from '../services/authService.js';
+import api from '../services/api'; 
 
-export const AuthContext = createContext();
+export const AuthContext = createContext({});
 
 export const AuthProvider = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  // O nome é userToken, mas ele vai guardar o objeto inteiro que a API retorna
-  const [userToken, setUserToken] = useState(null); 
+    const [isLoading, setIsLoading] = useState(true);
+    const [userToken, setUserToken] = useState(null); 
+    const [user, setUser] = useState(null); 
 
-  const login = async (email, password) => {
-    setIsLoading(true);
-    try {
-      // --> A variável 'token' aqui é na verdade um objeto retornado pela API.
-      const tokenObject = await loginUser(email, password); // Chamada de API
+    const login = async (email, password) => {
+        setIsLoading(true);
+        try {
+            const responseData = await loginUser(email, password);
+            const { token, user: userData } = responseData;
 
-      // --> 1. Stringify o objeto ANTES de salvar.
-      await AsyncStorage.setItem('userToken', JSON.stringify(tokenObject));
-      
-      // --> 2. O estado 'userToken' agora vai guardar o objeto inteiro.
-      setUserToken(tokenObject);
+            setUserToken(token);
+            setUser(userData);
 
-    } catch (error) {
-      // Lançar o erro para a tela de Login tratar
-      throw new Error(error.response?.data?.message || 'Erro ao fazer login');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('userToken');
-      setUserToken(null);
-    } catch (e) {
-      console.log('Erro ao deslogar:', e);
-    }
-  };
+            await AsyncStorage.setItem('userToken', token);
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
 
-  const register = async (name, email, password) => {
-    await registerUser(name, email, password);
-  };
+        } catch (error) {
+            console.error("Erro no login:", error.response?.data);
+            throw new Error(error.response?.data?.message || 'Erro ao fazer login');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  const isLoggedIn = async () => {
-    try {
-      setIsLoading(true);
-      // --> 1. Recupera o dado como string.
-      let storedTokenString = await AsyncStorage.getItem('userToken');
+    const logout = async () => {
+        try {
+            await AsyncStorage.removeItem('userToken');
+            await AsyncStorage.removeItem('user');
+            setUserToken(null);
+            setUser(null);
+            delete api.defaults.headers.common['Authorization'];
+        } catch (e) {
+            console.log('Erro ao deslogar:', e);
+        }
+    };
 
-      // --> 2. IMPORTANTE: Verifica se algo foi encontrado antes de tentar o parse.
-      if (storedTokenString) {
-        // --> 3. Converte a string de volta para um objeto e atualiza o estado.
-        setUserToken(JSON.parse(storedTokenString));
-      }
-    } catch (e) {
-      console.log(`isLogged in error ${e}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const register = async (name, email, password) => {
+        try {
+            await registerUser(name, email, password);
+        } catch (error) {
+            console.error("Erro no registro:", error);
+            throw new Error(error.response?.data?.message || 'Erro ao registrar');
+        }
+    };
 
-  useEffect(() => {
-    isLoggedIn();
-  }, []);
+    const loadStoredData = async () => {
+        try {
+            setIsLoading(true);
+            const token = await AsyncStorage.getItem('userToken');
+            const userString = await AsyncStorage.getItem('user');
 
-  return (
-    <AuthContext.Provider value={{ login, logout, register, isLoading, userToken }}>
-      {children}
-    </AuthContext.Provider>
-  );
+            if (token && userString) {
+                setUserToken(token);
+                setUser(JSON.parse(userString));
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
+        } catch (e) {
+            console.log(`Erro ao carregar dados salvos: ${e}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateUser = async (newUserData) => {
+        try {
+            setUser(newUserData); 
+            await AsyncStorage.setItem('user', JSON.stringify(newUserData)); 
+        } catch (e) {
+            console.error("Erro ao atualizar usuário no contexto:", e);
+        }
+    };
+
+    useEffect(() => {
+        loadStoredData();
+    }, []);
+
+    return (
+        <AuthContext.Provider value={{
+            login,
+            logout,
+            register,
+            isLoading,
+            userToken,
+            user, 
+            updateUser 
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

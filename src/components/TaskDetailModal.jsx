@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 import Button from './Button';
 
-const TaskDetailModal = ({ visible, tasks, date, onClose, onComplete, onEdit }) => {
+// 1. Props 'onComplete' removida, 'onDelete' adicionada
+const TaskDetailModal = ({ visible, tasks, date, onClose, onDelete, onEdit }) => {
   if (!tasks || tasks.length === 0) {
     return null;
   }
@@ -13,6 +14,25 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onComplete, onEdit }) 
     day: 'numeric',
     month: 'long',
   });
+
+  // 2. Função de confirmação de exclusão
+  const handleDeletePress = (task) => {
+    Alert.alert(
+      "Finalizar Tarefa",
+      `Tem certeza que deseja finalizar "${task.title}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Finalizar", 
+          style: "destructive", 
+          onPress: () => {
+            onDelete(task); // Chama a função de deletar passada pela tela pai
+            // Não precisa fechar o modal aqui, a tela pai (CalendarScreen) cuida disso
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <Modal
@@ -26,7 +46,6 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onComplete, onEdit }) 
           <Text style={styles.title}>{formattedDate}</Text>
           
           <ScrollView>
-            {/* Mapeia e renderiza CADA tarefa encontrada para o dia */}
             {tasks.map(task => (
               <View key={task.id} style={[styles.taskCard, { borderLeftColor: task.color }]}>
                 <Text style={styles.taskTitle}>{task.icon} {task.title}</Text>
@@ -36,11 +55,13 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onComplete, onEdit }) 
                 )}
 
                 <View style={styles.buttonRow}>
+                  {/* 3. Botão "Concluir" agora é "Excluir" e chama handleDeletePress */}
                   <Button
-                    title="Concluir"
-                    variant="primary" // Laranja
-                    onPress={() => onComplete(task)}
-                    style={{ flex: 1, marginRight: 8 }}
+                    title="Finalizar"
+                    variant="danger" // Vermelho (assumindo que seu Button.js suporta 'danger')
+                    onPress={() => handleDeletePress(task)}
+                    style={{ flex: 1, marginRight: 8, backgroundColor: COLORS.primary || '#D9534F' }} // Fallback
+                    textStyle={{ color: COLORS.white }}
                   />
                   <Button
                     title="Editar"
@@ -62,6 +83,7 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onComplete, onEdit }) 
   );
 };
 
+// ... (seus styles continuam os mesmos)
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
