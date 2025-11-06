@@ -1,6 +1,6 @@
 import React, { createContext, useState } from 'react';
 import { COLORS } from '../constants/theme';
-import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications'; // Importar para cancelar notificações
 
 export const RemindersContext = createContext({
   reminders: [],
@@ -11,22 +11,19 @@ export const RemindersContext = createContext({
 });
 
 const RemindersProvider = ({ children }) => {
-  const [reminders, setReminders] = useState([]); // Começa vazio
+  const [reminders, setReminders] = useState([]); 
 
-  // --- FUNÇÃO addReminder CORRIGIDA ---
   const addReminder = (reminderData) => {
-    // Ordem CORRETA: espalha primeiro, define/sobrescreve depois
     const newReminder = {
-      ...reminderData, // 1. Espalha dados (pode ter id: undefined)
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // 2. GERA/SOBRESCREVE ID único
-      color: COLORS.purple, // 3. GARANTE cor padrão
-      triggered: false, // 4. GARANTE estado inicial
-      notificationId: reminderData.notificationId || null, // Garante que o campo exista
+      ...reminderData, 
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9), 
+      color: COLORS.purple, 
+      triggered: false, 
+      notificationId: reminderData.notificationId || null, 
     };
     console.log("CONTEXT: Adicionando lembrete (CORRIGIDO):", newReminder);
     setReminders(prev => [...prev, newReminder]);
   };
-  // --- FIM DA CORREÇÃO ---
 
   const updateReminder = (updatedReminder) => {
     console.log("CONTEXT: Atualizando lembrete:", updatedReminder.id);
