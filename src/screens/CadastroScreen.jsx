@@ -60,7 +60,10 @@ const CadastroScreen = ({ navigation }) => {
     } catch (error) {
       console.error('Falha no cadastro:', error);
       const errorMessage =
-        error.response?.data?.message || 'Não foi possível criar a conta. Tente novamente mais tarde.';
+        error.response?.data?.message ||
+        error.response?.data ||
+        error.message ||
+        'Não foi possível criar a conta. Tente novamente mais tarde.';
       Alert.alert('Erro no Cadastro', errorMessage);
     } finally {
       setLoading(false);

@@ -16,8 +16,10 @@ import HomeScreen2 from '../screens/HomeScreen2';
 import CalendarScreen from '../screens/CalendarScreen';
 import RemindersScreen from '../screens/RemindersScreen';
 import RewardsScreen from '../screens/RewardsScreen';
+import GoalsScreen from '../screens/GoalsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import TimerScreen from '../screens/TimerScreen';
 
 import BottomTabBar2 from '../components/BottomTabBar2';
 
@@ -71,6 +73,7 @@ const AppTabs = () => (
       <Tab.Screen name="Home" component={HomeScreen2} />
       <Tab.Screen name="Calendar" component={CalendarScreen} />
       <Tab.Screen name="Reminders" component={RemindersScreen} />
+      <Tab.Screen name="Timer" component={TimerScreen} />
       <Tab.Screen name="Rewards" component={RewardsScreen} />
     </Tab.Navigator>
   );
@@ -78,6 +81,7 @@ const AppTabs = () => (
 const MainStack = () => (
   <MainStackNav.Navigator screenOptions={{ headerShown: false }}>
     <MainStackNav.Screen name="AppTabs" component={AppTabs} />
+    <MainStackNav.Screen name="Goals" component={GoalsScreen} />
     <MainStackNav.Screen name="Profile" component={ProfileScreen} />
     <MainStackNav.Screen name="EditProfile" component={EditProfileScreen} />
   </MainStackNav.Navigator>

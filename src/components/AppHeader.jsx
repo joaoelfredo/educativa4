@@ -14,6 +14,11 @@ const AppHeader = ({
 
   const { user, logout } = useContext(AuthContext);
 
+  const currentXP = user?.xpProgress ?? 0;
+  const nextLevelXP = user?.xpToNextLevel ?? 100;
+  const progressPercent = Math.min(100, nextLevelXP > 0 ? (currentXP / nextLevelXP) * 100 : 0);
+  const remainingXP = Math.max(0, nextLevelXP - currentXP);
+
   if (!user) {
     return (
       <LinearGradient colors={COLORS.secondaryGradient}>
@@ -69,13 +74,12 @@ const AppHeader = ({
             <View style={styles.progressRow}>
               <Text style={styles.levelText}>Nv. {user.level || 1}</Text>
               <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${user.xpProgress || 0}%` }]} />
+                <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
               </View>
               <Text style={styles.levelText}>Nv. {(user.level || 1) + 1}</Text>
             </View>
             <Text style={styles.progressText}>
-              {/* Calcula XP restante (assumindo 100 por nível se não houver) */}
-              {(user.xpToNextLevel || 100) - (user.xpProgress || 0)} XP para o próximo nível!
+              {remainingXP} XP para o próximo nível!
             </Text>
           </View>
         </View>
