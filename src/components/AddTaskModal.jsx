@@ -19,7 +19,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
     const [type, setType] = useState('trabalho');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [addReminder, setAddReminder] = useState(false);
-
+    
     const [reminderTime, setReminderTime] = useState(new Date());
     const [showTimePicker, setShowTimePicker] = useState(false);
     

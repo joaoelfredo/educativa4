@@ -1,9 +1,27 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginUser, registerUser } from '../services/authService.js';
-import api from '../services/api'; 
+import api from '../services/api';
+import { fetchUserProfile } from '../services/api';
 
 export const AuthContext = createContext({});
+
+const normalizeUserData = (rawUser) => {
+    if (!rawUser) return null;
+
+    const xp = rawUser.xp ?? 0;
+    const xpToNextLevel = rawUser.xpToNextLevel ?? 100;
+    const xpProgress = rawUser.xpProgress ?? (xp % xpToNextLevel);
+    const level = rawUser.level ?? Math.floor(xp / xpToNextLevel) + 1;
+
+    return {
+        ...rawUser,
+        xp,
+        xpToNextLevel,
+        xpProgress,
+        level,
+    };
+};
 
 export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
@@ -14,19 +32,36 @@ export const AuthProvider = ({ children }) => {
         setIsLoading(true);
         try {
             const responseData = await loginUser(email, password);
+            console.log('🔵 AuthContext login responseData:', responseData);
             const { token, user: userData } = responseData;
 
-            setUserToken(token);
-            setUser(userData);
+            const trimmedToken = token?.trim();
+            setUserToken(trimmedToken);
 
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            if (trimmedToken) {
+              api.defaults.headers.common['Authorization'] = `Bearer ${trimmedToken}`;
+            }
 
-            await AsyncStorage.setItem('userToken', token);
-            await AsyncStorage.setItem('user', JSON.stringify(userData));
+            let finalUser = normalizeUserData(userData);
+            try {
+                const profileUser = await fetchUserProfile();
+                finalUser = normalizeUserData(profileUser ?? userData);
+            } catch (profileError) {
+                console.warn('Não foi possível buscar perfil após login:', profileError?.message || profileError);
+            }
+
+            setUser(finalUser);
+            await AsyncStorage.setItem('userToken', trimmedToken);
+            await AsyncStorage.setItem('user', JSON.stringify(finalUser));
 
         } catch (error) {
-            console.error("Erro no login:", error.response?.data);
-            throw new Error(error.response?.data?.message || 'Erro ao fazer login');
+            console.error("Erro no login:", error.response?.data || error.message);
+            const message =
+                error.response?.data?.message ||
+                error.response?.data ||
+                error.message ||
+                'Erro ao fazer login';
+            throw new Error(message);
         } finally {
             setIsLoading(false);
         }
@@ -49,7 +84,12 @@ export const AuthProvider = ({ children }) => {
             await registerUser(name, email, password);
         } catch (error) {
             console.error("Erro no registro:", error);
-            throw new Error(error.response?.data?.message || 'Erro ao registrar');
+            const message =
+                error.response?.data?.message ||
+                error.response?.data ||
+                error.message ||
+                'Erro ao registrar';
+            throw new Error(message);
         }
     };
 
@@ -59,13 +99,25 @@ export const AuthProvider = ({ children }) => {
             const token = await AsyncStorage.getItem('userToken');
             const userString = await AsyncStorage.getItem('user');
 
-            if (token && userString) {
-                setUserToken(token);
-                setUser(JSON.parse(userString));
-                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            const trimmedToken = token?.trim();
+            if (trimmedToken) {
+                setUserToken(trimmedToken);
+                api.defaults.headers.common['Authorization'] = `Bearer ${trimmedToken}`;
+
+                let storedUser = userString ? JSON.parse(userString) : null;
+                try {
+                    const profileUser = await fetchUserProfile();
+                    setUser(normalizeUserData(profileUser ?? storedUser));
+                } catch (profileError) {
+                    console.warn('Não foi possível buscar perfil armazenado:', profileError?.message || profileError);
+                    setUser(normalizeUserData(storedUser));
+                }
+            } else {
+                delete api.defaults.headers.common['Authorization'];
             }
         } catch (e) {
             console.log(`Erro ao carregar dados salvos: ${e}`);
+            delete api.defaults.headers.common['Authorization'];
         } finally {
             setIsLoading(false);
         }
@@ -73,8 +125,9 @@ export const AuthProvider = ({ children }) => {
 
     const updateUser = async (newUserData) => {
         try {
-            setUser(newUserData); 
-            await AsyncStorage.setItem('user', JSON.stringify(newUserData)); 
+            const normalized = normalizeUserData(newUserData);
+            setUser(normalized);
+            await AsyncStorage.setItem('user', JSON.stringify(normalized));
         } catch (e) {
             console.error("Erro ao atualizar usuário no contexto:", e);
         }

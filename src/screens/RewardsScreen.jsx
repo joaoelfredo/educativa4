@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -9,9 +9,12 @@ import {
     TouchableOpacity, 
     Alert 
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
 import { AuthContext } from '../store/AuthContext';
+import { fetchMetrics } from '../services/api';
+import { MaterialIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
 import MascotMessage2 from '../components/MascotMessage2';
@@ -25,6 +28,50 @@ const RewardsScreen = ({ navigation }) => {
         xpProgress: 65,
         xpToNextLevel: 150,
     });
+
+    const [metrics, setMetrics] = useState({
+        weekGoals: 0,
+        monthGoals: 0,
+        yearGoals: 0,
+        completedTasks: 0,
+        streakDays: 0,
+        currentLevel: 1,
+    });
+
+    const [loadingMetrics, setLoadingMetrics] = useState(false);
+    const [metricsError, setMetricsError] = useState('');
+
+    const loadMetrics = useCallback(async () => {
+        setLoadingMetrics(true);
+        setMetricsError('');
+
+        try {
+            const data = await fetchMetrics();
+            setMetrics({
+                weekGoals: data.weekGoals ?? 0,
+                monthGoals: data.monthGoals ?? 0,
+                yearGoals: data.yearGoals ?? 0,
+                completedTasks: data.completedTasks ?? 0,
+                streakDays: data.streakDays ?? 0,
+                currentLevel: data.currentLevel ?? 1,
+            });
+        } catch (error) {
+            console.error('[RewardsScreen] Falha ao carregar métricas:', error);
+            setMetricsError('Não foi possível carregar as métricas. Tente novamente mais tarde.');
+        } finally {
+            setLoadingMetrics(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadMetrics();
+    }, [loadMetrics]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadMetrics();
+        }, [loadMetrics])
+    );
 
     const medals = [
         {
@@ -66,9 +113,9 @@ const RewardsScreen = ({ navigation }) => {
     ];
 
     const stats = [
-        { label: 'Tarefas Concluídas', value: '23', color: COLORS.green },
-        { label: 'Sequência Atual', value: '5 dias', color: COLORS.laranja },
-        { label: 'Nível Atual', value: '1', color: COLORS.marinho },
+        { label: 'Tarefas Concluídas', value: `${metrics.completedTasks}`, color: COLORS.green },
+        { label: 'Sequência Atual', value: `${metrics.streakDays} dias`, color: COLORS.laranja },
+        { label: 'Nível Atual', value: `${metrics.currentLevel}`, color: COLORS.marinho },
     ];
 
     const handleMedalPress = (medal) => {
@@ -138,6 +185,39 @@ const RewardsScreen = ({ navigation }) => {
                             </TouchableOpacity>
                         ))}
                     </View>
+                </View>
+
+                {/* Métricas de Produtividade */}
+                <View style={styles.card}>
+                    <Text style={styles.sectionTitle}>📈 Métricas de Produtividade</Text>
+                    <TouchableOpacity style={styles.viewDetailsButton} onPress={() => navigation.navigate('Goals')}>
+                        <MaterialIcons name="visibility" size={20} color="#4F6DFF" />
+                        <Text style={styles.viewDetailsText}>Ver detalhes</Text>
+                    </TouchableOpacity>
+                    {loadingMetrics ? (
+                        <Text style={styles.metricLoading}>Carregando métricas...</Text>
+                    ) : metricsError ? (
+                        <Text style={styles.metricLoading}>{metricsError}</Text>
+                    ) : (
+                        <View style={styles.metricsGrid}>
+                            
+                            <View style={styles.metricItem}>
+                                <Text style={styles.metricLabel}>Semana</Text>
+                                <Text style={styles.metricValue}>{metrics.weekGoals}</Text>
+                                <Text style={styles.metricSub}>metas</Text>
+                            </View>
+                            <View style={styles.metricItem}>
+                                <Text style={styles.metricLabel}>Mês</Text>
+                                <Text style={styles.metricValue}>{metrics.monthGoals}</Text>
+                                <Text style={styles.metricSub}>metas</Text>
+                            </View>
+                            <View style={styles.metricItem}>
+                                <Text style={styles.metricLabel}>Ano</Text>
+                                <Text style={styles.metricValue}>{metrics.yearGoals}</Text>
+                                <Text style={styles.metricSub}>metas</Text>
+                            </View>
+                        </View>
+                    )}
                 </View>
 
                 {/* Estatísticas */}
@@ -239,6 +319,62 @@ const styles = StyleSheet.create({
         ...FONTS.h3,
         fontSize: 20,
         fontWeight: 'bold',
+    },
+    metricsGrid: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    metricItem: {
+        flex: 1,
+        backgroundColor: COLORS.gelo,
+        padding: 16,
+        borderRadius: 14,
+        alignItems: 'center',
+    },
+    metricLabel: {
+        ...FONTS.body,
+        fontSize: 14,
+        color: COLORS.anil,
+        marginBottom: 6,
+    },
+    metricValue: {
+        ...FONTS.h2,
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: COLORS.marinho,
+    },
+    metricSub: {
+        ...FONTS.small,
+        fontSize: 12,
+        color: COLORS.gray,
+        marginTop: 4,
+    },
+    metricLoading: {
+        ...FONTS.body,
+        fontSize: 14,
+        color: COLORS.anil,
+    },
+    viewDetailsButton:{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 12,
+        borderRadius: 999,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        backgroundColor: '#E0E7FF',
+        alignSelf: 'flex-start',
+        shadowColor: '#acacac',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+    },
+    viewDetailsText: {
+        ...FONTS.small,
+        fontSize: 12,
+        fontWeight: '600',
+        color: 'black',
     },
 });
 
