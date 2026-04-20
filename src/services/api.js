@@ -4,25 +4,8 @@ import { Platform } from 'react-native';
 import { API_BASE_URL } from '@env';
 
 const getBaseURL = () => {
-  if (Platform.OS === 'web') {
-    return API_BASE_URL || 'http://192.168.1.9:3333';
-  }
-
-  if (Platform.OS === 'android') {
-    if (!API_BASE_URL || API_BASE_URL.includes('localhost')) {
-      return 'http://192.168.1.9:3333';
-    }
-    return API_BASE_URL;
-  }
-
-  if (Platform.OS === 'ios') {
-    if (!API_BASE_URL) {
-      return 'http://localhost:3333';
-    }
-    return API_BASE_URL;
-  }
-
-  return API_BASE_URL || 'http://localhost:3333';
+  // Forçando a URL de produção do Render para contornar o cache do .env
+  return 'https://educativaback.onrender.com';
 };
 
 const BASE_URL = getBaseURL();
