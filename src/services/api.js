@@ -4,10 +4,8 @@ import { Platform } from 'react-native';
 import { API_BASE_URL } from '@env';
 
 const getBaseURL = () => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:3333';
-  }
-  return API_BASE_URL; 
+  // Forçando a URL de produção do Render para contornar o cache do .env
+  return 'https://educativaback.onrender.com';
 };
 
 const BASE_URL = getBaseURL();
