@@ -25,6 +25,34 @@ const mapTaskFromApi = (apiTask) => {
 };
 
 /**
+ * Prepara os dados antes de enviar para o backend, garantindo que
+ * datas fiquem no formato ISO-8601 exigido pelo Prisma.
+ */
+const prepareDataForBackend = (data) => {
+    if (!data) return data;
+    const formatted = { ...data };
+    
+    if (formatted.dueDate) {
+        if (typeof formatted.dueDate === 'string' && formatted.dueDate.includes('/')) {
+            const [day, month, year] = formatted.dueDate.split('/');
+            if (day && month && year) {
+                formatted.dueDate = new Date(`${year}-${month}-${day}T12:00:00.000Z`).toISOString();
+            }
+        } else if (typeof formatted.dueDate === 'string' && formatted.dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            // Se já vier no formato "YYYY-MM-DD", apenas adicionamos o horário para garantir o ISO-8601
+            formatted.dueDate = new Date(`${formatted.dueDate}T12:00:00.000Z`).toISOString();
+        } else {
+            const parsedDate = new Date(formatted.dueDate);
+            if (!isNaN(parsedDate.getTime())) {
+                formatted.dueDate = parsedDate.toISOString();
+            }
+        }
+    }
+    
+    return formatted;
+};
+
+/**
  * Cria uma nova tarefa
  * @param {object} taskData - Dados formatados pelo AddTaskModal (ex: type em MAIÚSCULO)
  * @returns {Promise<object>} Tarefa criada no formato do Frontend
@@ -33,7 +61,8 @@ export const createTask = async (taskData) => {
     try {
         console.log('[taskService] Criando nova tarefa (dados para backend):', taskData);
         
-        const response = await api.post('/task', taskData);
+        const backendData = prepareDataForBackend(taskData);
+        const response = await api.post('/task', backendData);
         
         const newTaskFromApi = response.data.newTask;
         console.log('[taskService] Resposta da API:', newTaskFromApi);
@@ -56,7 +85,8 @@ export const updateTask = async (taskId, taskData) => {
     try {
         console.log(`[taskService] Atualizando tarefa ${taskId}:`, taskData);
         
-        const response = await api.put(`/task/${taskId}`, taskData);
+        const backendData = prepareDataForBackend(taskData);
+        const response = await api.put(`/task/${taskId}`, backendData);
         
         const updatedTaskFromApi = response.data.taskForUpdate;
         console.log('[taskService] Resposta da API (update):', updatedTaskFromApi);
