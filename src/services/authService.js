@@ -29,7 +29,8 @@ export const loginUser = async (email, password) => {
 } else {
   // --- CÓDIGO REAL DA API ---
   const response = await api.post('/auth/login', { email, password });
-  return response.data; 
+  console.log('🔵 loginUser response:', response.data);
+  return response.data;
 }
 };
 

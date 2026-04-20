@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const BottomTabBar2 = ({ state, navigation }) => {
 
   const tabInfo = {
-    'Home': { icon: '🏠', label: 'Início' },
-    'Calendar': { icon: '📅', label: 'Calendário' },
-    'Reminders': { icon: '🔔', label: 'Lembretes' },
-    'Rewards': { icon: '🏆', label: 'Conquistas' },
+    'Home': { icon: 'home', label: 'Início' },
+    'Calendar': { icon: 'calendar-today', label: 'Calendário' },
+    'Timer': { icon: 'timer', label: 'Timer' },
+    'Reminders': { icon: 'notifications', label: 'Lembretes' },
+    'Rewards': { icon: 'emoji-events', label: 'Conquistas' },
   };
 
   return (
@@ -38,7 +40,11 @@ const BottomTabBar2 = ({ state, navigation }) => {
             style={[styles.tab, isFocused && styles.tabActive]}
             activeOpacity={0.7}
           >
-            <Text style={styles.icon}>{icon}</Text>
+            <MaterialIcons
+    name={icon}
+    size={24}
+    color={isFocused ? COLORS.secondary : '#6B7280'}
+  />
             <Text style={[styles.label, isFocused ? styles.labelActive : styles.labelInactive]}>
               {label}
             </Text>
@@ -55,7 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    paddingBottom: 8, 
+    paddingBottom: 4,
     paddingTop: 4,
     elevation: 8,
     shadowColor: '#000',
