@@ -1,24 +1,59 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
+import React, { useContext, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform, Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context'; 
 import AppHeader from '../components/AppHeader';
 import { COLORS, FONTS } from '../constants/theme';
 import { AuthContext } from '../store/AuthContext'; 
 import { Ionicons } from '@expo/vector-icons';
+import { fetchMetrics } from '../services/api';
 
 const ProfileScreen = ({ navigation }) => {
     const { user, logout } = useContext(AuthContext);
 
+    const [metrics, setMetrics] = useState({
+        completedTasks: 0,
+        streakDays: 0,
+        medalsCount: 0
+    });
+
+    const loadMetrics = useCallback(async () => {
+        try {
+            const data = await fetchMetrics();
+            
+            // Calculando a quantidade de medalhas conquistadas (mesma lógica da RewardsScreen)
+            let medalsCount = 0;
+            if ((data.streakDays ?? 0) >= 7) medalsCount++;
+            if ((data.completedTasks ?? 0) >= 10) medalsCount++;
+            if ((data.completedTasks ?? 0) >= 5) medalsCount++;
+            if ((data.completedTasks ?? 0) >= 50) medalsCount++;
+
+            setMetrics({
+                completedTasks: data.completedTasks ?? 0,
+                streakDays: data.streakDays ?? 0,
+                medalsCount: medalsCount
+            });
+        } catch (error) {
+            console.error('[ProfileScreen] Falha ao carregar métricas:', error);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadMetrics();
+        }, [loadMetrics])
+    );
+
     const userGamification = {
-        level: user?.level || 3, 
+        level: user?.level || 1, 
         title: user?.title || 'Estudante Dedicado',
-        xpProgress: user?.xpProgress || 65,
-        xpToNextLevel: user?.xpToNextLevel || 150,
+        xpProgress: user?.xpProgress || 0,
+        xpToNextLevel: 100,
         stats: [
-            { value: user?.tasksCompleted || 23, label: 'Tarefas Concluídas', bgColor: COLORS.gelo, textColor: COLORS.secondary },
-            { value: user?.streak || 5, label: 'Dias de Sequência', bgColor: '#FFF3E0', textColor: '#F57C00' },
+            { value: metrics.completedTasks, label: 'Tarefas Concluídas', bgColor: COLORS.gelo, textColor: COLORS.secondary },
+            { value: metrics.streakDays, label: 'Dias de Sequência', bgColor: '#FFF3E0', textColor: '#F57C00' },
             { value: user?.level || 1, label: 'Nível Atual', bgColor: '#E8F5E9', textColor: '#4CAF50' },
-            { value: user?.medals || 3, label: 'Medalhas', bgColor: '#F3E5F5', textColor: '#9C27B0' },
+            { value: metrics.medalsCount, label: 'Medalhas', bgColor: '#F3E5F5', textColor: '#9C27B0' },
         ]
     };
 
@@ -69,10 +104,13 @@ const ProfileScreen = ({ navigation }) => {
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.profileCard}>
-                    <View style={styles.profilePhoto}>
-                        {/* 6. Usa a inicial do nome real */}
-                        <Text style={styles.profilePhotoText}>{user.name ? user.name[0].toUpperCase() : '?'}</Text>
-                    </View>
+                    {user.photo ? (
+                        <Image source={{ uri: user.photo }} style={styles.profilePhoto} />
+                    ) : (
+                        <View style={styles.profilePhoto}>
+                            <Text style={styles.profilePhotoText}>{user.name ? user.name[0].toUpperCase() : '?'}</Text>
+                        </View>
+                    )}
                     {/* 7. Usa os dados reais do 'user' */}
                     <Text style={styles.profileName}>{user.name}</Text>
 

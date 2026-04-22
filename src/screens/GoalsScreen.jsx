@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useContext } from 'react'
 import {
   SafeAreaView,
   View,
@@ -19,6 +19,7 @@ import GoalCard from '../components/GoalCard'
 import { MaterialIcons } from '@expo/vector-icons'
 import { COLORS, FONTS } from '../constants/theme'
 import { fetchGoals, createGoal, progressGoal, completeGoal, deleteGoal } from '../services/api'
+import { AuthContext } from '../store/AuthContext'
 
 const GoalsScreen = ({ navigation }) => {
   const [goals, setGoals] = useState([])
@@ -27,6 +28,8 @@ const GoalsScreen = ({ navigation }) => {
   const [processingGoalId, setProcessingGoalId] = useState(null)
   const [deletingGoalId, setDeletingGoalId] = useState(null)
   const [isAddModalVisible, setIsAddModalVisible] = useState(false)
+
+  const { user, updateUser } = useContext(AuthContext)
 
   const loadGoals = useCallback(async () => {
     setLoading(true)
@@ -93,6 +96,14 @@ const GoalsScreen = ({ navigation }) => {
     try {
       const updatedGoal = await progressGoal(goalId, 25)
       setGoals((current) => current.map((goal) => (goal.id === goalId ? updatedGoal : goal)))
+
+      // Se o progresso concluiu a meta, atualizamos o XP na interface
+      if (updatedGoal?.completed && user && updateUser) {
+        const newXp = (user.xp || 0) + 10
+        const newLevel = Math.floor(newXp / 100) + 1
+        updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: newLevel })
+        Alert.alert('Parabéns! 🎉', 'Meta concluída! Você ganhou +10 XP')
+      }
     } catch (error) {
       console.error('[GoalsScreen] Erro ao atualizar progresso:', error)
       Alert.alert('Erro', 'Não foi possível registrar a sessão. Tente novamente.')
@@ -110,6 +121,14 @@ const GoalsScreen = ({ navigation }) => {
         setGoals((current) => current.map((goal) => (goal.id === goalId ? updatedGoal : goal)))
       } else {
         await loadGoals()
+      }
+      
+      // Lógica de adicionar +10 XP na barra instantaneamente
+      if (user && updateUser) {
+        const newXp = (user.xp || 0) + 10
+        const newLevel = Math.floor(newXp / 100) + 1
+        updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: newLevel })
+        Alert.alert('Parabéns! 🎉', 'Meta concluída! Você ganhou +10 XP')
       }
     } catch (error) {
       console.error('[GoalsScreen] Erro ao concluir meta:', error)

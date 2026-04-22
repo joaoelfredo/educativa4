@@ -2,12 +2,13 @@ import React, { useState, useContext, useEffect } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     TextInput, Alert, SafeAreaView, Platform, ActivityIndicator,
-    Keyboard
+    Keyboard, Image
 } from 'react-native';
 import { SafeAreaView as SafeContextView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient'; 
 import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS, FONTS } from '../constants/theme';
 import { AuthContext } from '../store/AuthContext';
 import api from '../services/api';
@@ -22,6 +23,7 @@ const EditProfileScreen = ({ navigation }) => {
     const [email, setEmail] = useState(user?.email || '');
     const [phone, setPhone] = useState(user?.phone || '');
     const [course, setCourse] = useState(user?.course || '');
+    const [photo, setPhoto] = useState(user?.photo || null);
     const [loadingProfile, setLoadingProfile] = useState(false);
 
     const [loadingPassword, setLoadingPassword] = useState(false);
@@ -39,8 +41,30 @@ const EditProfileScreen = ({ navigation }) => {
             setEmail(user.email);
             setPhone(user.phone || '');
             setCourse(user.course || '');
+            setPhoto(user.photo || null);
         }
     }, [user]);
+
+    const handlePickImage = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permissão Negada', 'Precisamos de acesso à sua galeria para mudar a foto.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5, // Reduz a qualidade para a imagem base64 não ficar muito grande
+            base64: true,
+        });
+
+        if (!result.canceled) {
+            const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+            setPhoto(base64Image);
+        }
+    };
 
     const handleSaveProfile = async () => {
         if (!name || !email) {
@@ -48,7 +72,7 @@ const EditProfileScreen = ({ navigation }) => {
             return;
         }
         setLoadingProfile(true);
-        const profileData = { name, email, phone, course };
+        const profileData = { name, email, phone, course, photo };
 
         try {
             const response = await api.patch('/user/profile', profileData);
@@ -138,9 +162,16 @@ const EditProfileScreen = ({ navigation }) => {
             >
                 <View style={styles.card}>
                     <View style={styles.photoSection}>
-                        <View style={styles.profilePhoto}>
-                            <Text style={styles.profilePhotoText}>{name ? name[0].toUpperCase() : '?'}</Text>
-                        </View>
+                        <TouchableOpacity onPress={handlePickImage} style={{ alignItems: 'center' }}>
+                            {photo ? (
+                                <Image source={{ uri: photo }} style={styles.profilePhoto} />
+                            ) : (
+                                <View style={styles.profilePhoto}>
+                                    <Text style={styles.profilePhotoText}>{name ? name[0].toUpperCase() : '?'}</Text>
+                                </View>
+                            )}
+                            <Text style={styles.changePhotoText}>Alterar foto de perfil</Text>
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.form}>
                         <View style={styles.inputGroup}>

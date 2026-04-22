@@ -25,22 +25,24 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
+    setErrorMessage(''); // Limpa mensagens anteriores
     if (!email || !password) {
-      Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
+      setErrorMessage('Por favor, preencha todos os campos.');
       return;
     }
     if (!isValidEmail(email)) {
-      Alert.alert('E-mail Inválido', 'Por favor, insira um formato de e-mail válido.');
+      setErrorMessage('Por favor, insira um formato de e-mail válido.');
       return;
     }
     setLoading(true);
     try {
       await login(email, password);
     } catch (error) {
-      Alert.alert('Erro no Login', error.message);
+      setErrorMessage(error.message || 'E-mail ou senha incorretos.');
     } finally {
       setLoading(false);
     }
@@ -85,6 +87,13 @@ const LoginScreen = ({ navigation }) => {
                 }
                 onIconPress={() => setPasswordVisible(!isPasswordVisible)}
               />
+              
+              {errorMessage !== '' && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              )}
+
               <Button
                 title="Entrar no EducAtiva"
                 onPress={handleLogin}
@@ -134,6 +143,20 @@ const styles = StyleSheet.create({
   subtitle: { ...FONTS.body, color: COLORS.white, opacity: 0.9, textAlign: 'center', marginTop: 8 },
   link: { ...FONTS.body, fontWeight: '700', color: COLORS.primary, textAlign: 'center', paddingVertical: 8 },
   footerText: { ...FONTS.body, color: COLORS.white },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 68, 68, 0.2)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 68, 68, 0.4)',
+  },
+  errorText: {
+    ...FONTS.body,
+    color: '#FFD166', // Um amarelo/laranja que contrasta bem no fundo azul
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
 });
 
 export default LoginScreen;

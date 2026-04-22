@@ -1,11 +1,14 @@
-import React, { useState, useMemo, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, Platform, ActivityIndicator } from 'react-native'; // Adicionado ActivityIndicator
+import React, { useState, useMemo, useContext, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, Platform, ActivityIndicator, Animated } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import { useAudioPlayer } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../constants/theme';
+import { MaterialIcons } from '@expo/vector-icons';
 import { taskTypes } from '../constants/taskTypes';
 import { TasksContext } from '../store/TasksContext';
 import { RemindersContext } from '../store/RemindersContext';
+import { AuthContext } from '../store/AuthContext';
 import { SafeAreaView as SafeContextView } from 'react-native-safe-area-context';
 import api from '../services/api'; 
 
@@ -15,10 +18,13 @@ import MascotMessage2 from '../components/MascotMessage2';
 import TaskDetailModal from '../components/TaskDetailModal';
 import AddTaskModal from '../components/AddTaskModal';
 
+const levelUpAudioSource = require('../../assets/levelUp.mp3');
+
 const CalendarScreen = ({ navigation }) => {
     // 2. PEGAR O 'setTasks' E O 'addTask' REAIS DO CONTEXTO
     const { tasks, setTasks, addTask, updateTask, deleteTask } = useContext(TasksContext); 
     const { addReminder, deleteRemindersByTaskId } = useContext(RemindersContext);
+    const { user, updateUser } = useContext(AuthContext); // <-- Importando o usuário e função de atualizar
 
     const [isDetailModalVisible, setDetailModalVisible] = useState(false);
     const [isAddModalVisible, setAddModalVisible] = useState(false);
@@ -26,8 +32,10 @@ const CalendarScreen = ({ navigation }) => {
     const [taskToEdit, setTaskToEdit] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [isLoading, setIsLoading] = useState(true); // Adicionar estado de loading
-
-    const [userData, setUserData] = useState({ /* ... seus dados ... */ });
+    const [showLevelUp, setShowLevelUp] = useState(false);
+    const scaleAnim = useRef(new Animated.Value(0)).current;
+    
+    const player = useAudioPlayer(levelUpAudioSource);
 
     // 3. FUNÇÃO PARA BUSCAR TAREFAS (Igual da HomeScreen)
     const fetchTasks = async () => {
@@ -49,6 +57,8 @@ const CalendarScreen = ({ navigation }) => {
             setIsLoading(false);
         }
     };
+
+
 
     // 4. useEffect PARA CARREGAR TAREFAS
     useEffect(() => {
@@ -116,7 +126,7 @@ const CalendarScreen = ({ navigation }) => {
                 setDetailModalVisible(false);
             }
             
-            Alert.alert("Sucesso!", "Tarefa finalizada e removida."); // Mensagem de sucesso
+            Alert.alert("Sucesso!", "Tarefa excluída."); 
             console.log(`Tarefa ${taskToDelete.id} excluída via API.`);
 
         } catch (error) {
@@ -127,6 +137,83 @@ const CalendarScreen = ({ navigation }) => {
         }
     };
 
+    // 5.b FUNÇÃO DE CONCLUIR TAREFA (FINALIZAR COM XP)
+    const handleCompleteTask = async (task) => {
+        Alert.alert("Concluir Tarefa", `Marcar "${task.title}" como concluída?`,
+            [{ text: "Cancelar", style: "cancel" }, {
+                text: "Concluir",
+                onPress: async () => {
+                    setIsLoading(true);
+                    try {
+                        // 1. Atualiza no backend (apenas o status completed)
+                        const response = await api.put(`/task/${task.id}`, {
+                            completed: !task.completed
+                        });
+                        
+                        const updatedTask = {
+                            ...response.data.taskForUpdate,
+                            date: response.data.taskForUpdate.dueDate.split('T')[0],
+                            dueDate: new Date(response.data.taskForUpdate.dueDate).toLocaleDateString('pt-BR'),
+                            type: response.data.taskForUpdate.type.toLowerCase(),
+                        };
+
+                        // 2. Atualiza a tela
+                        updateTask(updatedTask);
+                        setDetailModalVisible(false);
+                        
+                        // 3. Adiciona XP caso a tarefa esteja sendo concluída agora
+                        if (!task.completed && user && updateUser) {
+                            const oldLevel = Math.floor((user.xp || 0) / 100) + 1;
+                            const newXp = (user.xp || 0) + 10;
+                            const newLevel = Math.floor(newXp / 100) + 1;
+                            
+
+                            updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: newLevel });
+                            
+                            // Se o nível mudou, mostra a animação. Se não, alerta normal.
+                            if (newLevel > oldLevel) {
+                                setShowLevelUp(true);
+                                
+                                // Toca o som de Level Up
+                                player.seekTo(0);
+                                player.play();
+
+                                Animated.spring(scaleAnim, {
+                                    toValue: 1,
+                                    friction: 4, // Quão "elástico" o pulo será
+                                    useNativeDriver: true,
+                                }).start();
+
+                                // Esconde após 3 segundos
+                                setTimeout(() => {
+                                    Animated.timing(scaleAnim, {
+                                        toValue: 0,
+                                        duration: 300,
+                                        useNativeDriver: true,
+                                    }).start(() => setShowLevelUp(false));
+                                }, 3000);
+                            } else {
+                                Alert.alert("Parabéns!", "Tarefa concluída! Você ganhou +10 XP");
+                            }
+                        } else if (task.completed && user && updateUser) {
+                            // Reverter XP localmente
+                            const newXp = Math.max(0, (user.xp || 0) - 10);
+                            updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: Math.floor(newXp / 100) + 1 });
+                            Alert.alert("Atenção", "Tarefa marcada como pendente. -10 XP.");
+                        } else {
+                            Alert.alert("Sucesso!", "Status da tarefa atualizado.");
+                        }
+                    } catch (error) {
+                        console.error("Erro ao completar tarefa:", error);
+                        Alert.alert("Erro", "Não foi possível atualizar a tarefa.");
+                    } finally {
+                        setIsLoading(false);
+                    }
+                }
+            }]
+        );
+    };
+
     const handleOpenEditModal = (task) => {
         setDetailModalVisible(false);
         setTaskToEdit(task);
@@ -135,7 +222,7 @@ const CalendarScreen = ({ navigation }) => {
 
     // 6. FUNÇÃO DE SUBMISSÃO (CRIAR/EDITAR) - CORRIGIDA COM API
     const handleSubmitTask = async (taskDataFromModal) => {
-        setLoading(true);
+        setIsLoading(true);
         const isEditing = !!taskDataFromModal.id;
 
         // Formatar dados para o backend (igual HomeScreen)
@@ -186,10 +273,10 @@ const CalendarScreen = ({ navigation }) => {
         } catch (error) {
             console.error("Erro ao salvar tarefa (Calendário):", error.response?.data);
             Alert.alert("Erro", "Não foi possível salvar a tarefa.");
-            setLoading(false);
+            setIsLoading(false);
             return null; // Falhou
         } finally {
-             setLoading(false);
+             setIsLoading(false);
         }
     };
 
@@ -206,7 +293,7 @@ const CalendarScreen = ({ navigation }) => {
                     text: "Excluir",
                     style: "destructive",
                     onPress: async () => { // Adicionado async
-                        setLoading(true);
+                        setIsLoading(true);
                         try {
                             // 1. Chamar API
                             await api.delete(`/task/${taskToEdit.id}`);
@@ -221,7 +308,7 @@ const CalendarScreen = ({ navigation }) => {
                             console.error("Erro ao excluir tarefa (edição):", error);
                             Alert.alert("Erro", "Não foi possível excluir a tarefa.");
                         } finally {
-                            setLoading(false);
+                            setIsLoading(false);
                         }
                     }
                 }
@@ -235,7 +322,7 @@ const CalendarScreen = ({ navigation }) => {
             <LinearGradient colors={COLORS.secondaryGradient}>
                 <AppHeader
                     navigation={navigation}
-                    userData={userData}
+                    userData={user} // Passando os dados reais do usuário para atualizar a barra!
                     showBackButton={true}
                     title="Calendário"
                     onProfilePress={() => navigation.navigate('Profile')}       
@@ -263,7 +350,10 @@ const CalendarScreen = ({ navigation }) => {
                     />
                 </View>
                 <View style={styles.card}>
-                    <Text style={styles.legendTitle}>🎨 Legenda</Text>
+                    <View style={styles.legendHeader}>
+                        <MaterialIcons name="palette" size={24} color={COLORS.marinho} />
+                        <Text style={styles.legendTitle}>Legenda</Text>
+                    </View>
                     {taskTypes.map(type => (
                         <View key={type.id} style={styles.legendItem}>
                             <View style={[styles.legendDot, { backgroundColor: type.color }]} />
@@ -281,6 +371,7 @@ const CalendarScreen = ({ navigation }) => {
                 onClose={() => setDetailModalVisible(false)}
                 // 8. Passando a função de DELETAR para o botão 'onDelete'
                 onDelete={handleDeleteTaskOnDetail} 
+                onComplete={handleCompleteTask}
                 onEdit={handleOpenEditModal}
             />
 
@@ -293,6 +384,18 @@ const CalendarScreen = ({ navigation }) => {
                 selectedDate={selectedDate}
                 onDelete={handleDeleteTaskOnEdit} // Passando a função de DELETAR para o botão 'onDelete'
             />
+
+            {/* Animação de Level Up (Overlay Flutuante) */}
+            {showLevelUp && (
+                <View style={styles.levelUpOverlay}>
+                    <Animated.View style={[styles.levelUpBox, { transform: [{ scale: scaleAnim }] }]}>
+                        <MaterialIcons name="emoji-events" size={56} color={COLORS.laranja} style={{ marginBottom: 12 }} />
+                        <Text style={styles.levelUpTitle}>LEVEL UP!</Text>
+                        <Text style={styles.levelUpText}>Você alcançou o Nível {user?.level || 1}</Text>
+                        <Text style={styles.levelUpSub}>Continue assim!</Text>
+                    </Animated.View>
+                </View>
+            )}
         </SafeContextView>
     );
 };
@@ -315,7 +418,8 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         shadowOffset: { width: 0, height: 2 }
     },
-    legendTitle: { ...FONTS.h3, color: COLORS.marinho, marginBottom: 12 },
+    legendHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    legendTitle: { ...FONTS.h3, color: COLORS.marinho, marginLeft: 8 },
     legendItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     legendDot: { width: 14, height: 14, borderRadius: 7, marginRight: 10 },
     legendText: { ...FONTS.body, color: COLORS.text },
@@ -327,7 +431,28 @@ const styles = StyleSheet.create({
         zIndex: 10,
         marginLeft: -18,
         marginTop: -18,
-    }
+    },
+    levelUpOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    levelUpBox: {
+        backgroundColor: COLORS.white,
+        padding: 32,
+        borderRadius: 24,
+        alignItems: 'center',
+        shadowColor: '#FFD166',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.8,
+        shadowRadius: 20,
+        elevation: 15,
+    },
+    levelUpTitle: { ...FONTS.h1, fontSize: 32, color: COLORS.laranja, marginBottom: 12, textAlign: 'center' },
+    levelUpText: { ...FONTS.h2, color: COLORS.marinho, marginBottom: 8 },
+    levelUpSub: { ...FONTS.body, color: COLORS.gray },
 });
 
 export default CalendarScreen;

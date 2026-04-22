@@ -7,6 +7,7 @@ import { RemindersContext } from '../store/RemindersContext';
 import { AuthContext } from '../store/AuthContext';
 import api from '../services/api';
 import * as Notifications from 'expo-notifications';
+import { MaterialIcons } from '@expo/vector-icons';
 
 // Componentes
 import AppHeader from '../components/AppHeader';
@@ -54,7 +55,10 @@ const RemindersDoDia = ({ reminders }) => {
     if (reminders.length === 0) return null;
     return (
         <View style={styles.remindersCard}>
-            <Text style={styles.remindersTitle}>🔔 Lembretes de Hoje</Text>
+            <View style={styles.remindersHeader}>
+                <MaterialIcons name="notifications-active" size={24} color={COLORS.marinho} />
+                <Text style={styles.remindersTitle}>Lembretes de Hoje</Text>
+            </View>
             {reminders.map(reminder => (
                 <View key={reminder.id} style={styles.reminderItem}>
                     <Text style={styles.reminderTime}>{reminder.time}</Text>
@@ -93,7 +97,7 @@ const HomeScreen2 = ({ navigation }) => {
 
     const { tasks, setTasks, addTask, updateTask, deleteTask } = useContext(TasksContext);
     const { reminders, addReminder, updateReminder, deleteRemindersByTaskId } = useContext(RemindersContext);
-    const { user } = useContext(AuthContext);
+    const { user, updateUser } = useContext(AuthContext);
 
     const fetchTasks = async () => {
         setLoading(true);
@@ -163,7 +167,7 @@ const HomeScreen2 = ({ navigation }) => {
 
         for (const reminder of dueReminders) {
             Alert.alert(
-                `🔔 Lembrete: ${reminder.taskTitle}`,
+                `Lembrete: ${reminder.taskTitle}`,
                 reminder.text,
                 [{ text: 'OK' }]
             );
@@ -171,8 +175,6 @@ const HomeScreen2 = ({ navigation }) => {
         }
     };
     // --- FIM DA CORREÇÃO DO ALARM CHECKER ---
-
-    const userData = { /* ... seus dados ... */ };
 
     // (handleAddTask - MANTIDO IGUAL)
     const handleAddTask = async (taskDataFromModal) => {
@@ -277,7 +279,20 @@ const HomeScreen2 = ({ navigation }) => {
 
                         updateTask(updatedTask);
                         setDetailModalVisible(false);
-                        Alert.alert("Parabéns! 🎉", "Tarefa concluída!");
+                        
+                        // --- LÓGICA DE XP AO CONCLUIR ---
+                        if (!task.completed && user && updateUser) {
+                            const newXp = (user.xp || 0) + 10;
+                            updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: Math.floor(newXp / 100) + 1 });
+                            Alert.alert("Parabéns!", "Tarefa concluída! Você ganhou +10 XP");
+                        } else if (task.completed && user && updateUser) {
+                            // Se a tarefa foi desmarcada (era true e virou false)
+                            const newXp = Math.max(0, (user.xp || 0) - 10);
+                            updateUser({ ...user, xp: newXp, xpProgress: newXp % 100, level: Math.floor(newXp / 100) + 1 });
+                            Alert.alert("Atenção", "Tarefa marcada como pendente. -10 XP.");
+                        } else {
+                             Alert.alert("Sucesso!", "Status da tarefa atualizado.");
+                        }
                     } catch (error) {
                         console.error("Erro ao completar tarefa:", error.response?.data);
                         Alert.alert("Erro", "Não foi possível atualizar a tarefa.");
@@ -291,7 +306,7 @@ const HomeScreen2 = ({ navigation }) => {
 
     // --- FUNÇÃO QUE FALTAVA ---
     const handleOpenTaskDetail = (date) => {
-        const tasksForDate = tasks.filter(task => (task.date) === date);
+        const tasksForDate = tasks.filter(task => (task.date) === date && !task.completed);
         if (tasksForDate.length > 0) {
             setSelectedTasks(tasksForDate);
             setSelectedDate(date);
@@ -308,7 +323,8 @@ const HomeScreen2 = ({ navigation }) => {
 
     // --- FILTROS CORRIGIDOS ---
     const today = getTodayLocalString(); // "YYYY-MM-DD" local
-    const tasksForToday = tasks.filter(task => (task.date) === today); 
+    const pendingTasks = tasks.filter(task => !task.completed);
+    const tasksForToday = pendingTasks.filter(task => (task.date) === today); 
     const remindersToday = reminders
         .filter(r => r.taskDate === today)
         .sort((a, b) => a.time.localeCompare(b.time));
@@ -318,7 +334,7 @@ const HomeScreen2 = ({ navigation }) => {
             <View style={styles.container}>
                 <AppHeader
                     navigation={navigation}
-                    userData={userData}
+                    userData={user} // Passando os dados reais para atualizar a barra de XP
                     onProfilePress={() => navigation.navigate('Profile')}
                 />
                 
@@ -343,7 +359,7 @@ const HomeScreen2 = ({ navigation }) => {
                     />
                     
                     <UpcomingTasks
-                        tasks={tasks}
+                        tasks={pendingTasks}
                         onTaskPress={(date) => handleOpenTaskDetail(date)} 
                     />
                 </ScrollView>
@@ -367,6 +383,7 @@ const HomeScreen2 = ({ navigation }) => {
                     onClose={() => setDetailModalVisible(false)}
                     onComplete={handleCompleteTask}
                     onEdit={handleEditTask}
+                    onDelete={(task) => handleDeleteTask(task.id)}
                 />
             </View>
         </SafeAreaView>
@@ -400,7 +417,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 3,
     },
-    remindersTitle: { ...FONTS.h3, color: COLORS.marinho, marginBottom: 12 },
+    remindersHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    remindersTitle: { ...FONTS.h3, color: COLORS.marinho, marginLeft: 8 },
     reminderItem: {
         flexDirection: 'row',
         alignItems: 'center',

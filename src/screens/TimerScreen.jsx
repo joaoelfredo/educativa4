@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import AppHeader from '../components/AppHeader'
+import MascotMessage2 from '../components/MascotMessage2'
 import AddGoalModal from '../components/AddGoalModal'
 import { createGoal, completeGoal, deleteGoal, fetchGoals } from '../services/api'
 import { AuthContext } from '../store/AuthContext'
@@ -284,28 +285,12 @@ const TimerScreen = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* MODOS */}
-        <View style={styles.Modecontainer}>
-        {Object.keys(config).map((key) => (
-          <TouchableOpacity
-            key={key}
-            onPress={() => handleModeChange(key)}
-            style={[
-              styles.btnMode,
-              mode === key && { backgroundColor: themeByMode[key].primary },
-            ]}
-          >
-            <MaterialIcons
-              name={iconsByMode[key]}
-              size={20}
-              color={mode === key ? '#FFF' : '#6B7280'}
-            />
-            <Text style={[styles.textMode, mode === key && styles.textModeActive]}>
-              {key}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        
+        <View style={styles.mascotContainer}>
+          <MascotMessage2 message={messages[mode]} source={themeByMode[mode].foto} />
+        </View>
+
+        
 
       
 {!goal?.text ? (
@@ -402,14 +387,34 @@ const TimerScreen = ({ navigation }) => {
 
   <MaterialIcons name="chevron-right" size={24} color="#9CA3AF" />
 </TouchableOpacity>
+
+{/* MODOS */}
+        <View style={styles.Modecontainer}>
+        {Object.keys(config).map((key) => (
+          <TouchableOpacity
+            key={key}
+            onPress={() => handleModeChange(key)}
+            style={[
+              styles.btnMode,
+              mode === key && { backgroundColor: themeByMode[key].primary },
+            ]}
+          >
+            <MaterialIcons
+              name={iconsByMode[key]}
+              size={20}
+              color={mode === key ? '#FFF' : '#6B7280'}
+            />
+            <Text style={[styles.textMode, mode === key && styles.textModeActive]}>
+              {key}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       
 
       {/* CARD */}
       <View style={[styles.card, { backgroundColor: themeByMode[mode].primary }]}>
         
-        {/* 🐻 Mascote */}
-        <Image source={themeByMode[mode].foto} style={styles.mascot} />
-
         {/* ⏱️ TIMER + RING */}
         <View style={styles.timerWrapper}>
           <Svg width={260} height={260}>
@@ -442,9 +447,6 @@ const TimerScreen = ({ navigation }) => {
 
           <Text style={styles.textTime}>{formatTime(time)}</Text>
         </View>
-
-        {/* 💬 mensagem */}
-        <Text style={styles.messagesContainer}>{messages[mode]}</Text>
 
         {/* 🎮 botões */}
         <View style={styles.btnContainer}>
@@ -488,6 +490,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F9FC',
     paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
+  mascotContainer: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 4,
+  },
 
   Modecontainer: {
     flexDirection: 'row',
@@ -521,18 +528,14 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 24,
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'center',
+    gap: 32,
 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 10,
-  },
-
-  mascot: {
-    width: 100,
-    height: 100,
   },
 
   timerWrapper: {
@@ -545,14 +548,6 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: 'bold',
     color: '#FFF',
-  },
-
-  messagesContainer: {
-    textAlign: 'center',
-    color: '#FFF',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: 12,
-    borderRadius: 12,
   },
 
   btnContainer: {

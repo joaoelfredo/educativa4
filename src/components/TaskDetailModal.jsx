@@ -2,9 +2,9 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 import Button from './Button';
+import { MaterialIcons } from '@expo/vector-icons';
 
-// 1. Props 'onComplete' removida, 'onDelete' adicionada
-const TaskDetailModal = ({ visible, tasks, date, onClose, onDelete, onEdit }) => {
+const TaskDetailModal = ({ visible, tasks, date, onClose, onDelete, onEdit, onComplete }) => {
   if (!tasks || tasks.length === 0) {
     return null;
   }
@@ -15,24 +15,6 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onDelete, onEdit }) =>
     month: 'long',
   });
 
-  // 2. Função de confirmação de exclusão
-  const handleDeletePress = (task) => {
-    Alert.alert(
-      "Finalizar Tarefa",
-      `Tem certeza que deseja finalizar "${task.title}"?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Finalizar", 
-          style: "destructive", 
-          onPress: () => {
-            onDelete(task); // Chama a função de deletar passada pela tela pai
-            // Não precisa fechar o modal aqui, a tela pai (CalendarScreen) cuida disso
-          }
-        }
-      ]
-    );
-  };
 
   return (
     <Modal
@@ -51,16 +33,18 @@ const TaskDetailModal = ({ visible, tasks, date, onClose, onDelete, onEdit }) =>
                 <Text style={styles.taskTitle}>{task.icon} {task.title}</Text>
                 
                 {task.notes && (
-                  <Text style={styles.taskNotes}>ℹ️ {task.notes}</Text>
+                  <View style={styles.notesContainer}>
+                    <MaterialIcons name="info-outline" size={18} color={COLORS.gray} />
+                    <Text style={styles.taskNotes}>{task.notes}</Text>
+                  </View>
                 )}
 
                 <View style={styles.buttonRow}>
-                  {/* 3. Botão "Concluir" agora é "Excluir" e chama handleDeletePress */}
                   <Button
-                    title="Finalizar"
-                    variant="danger" // Vermelho (assumindo que seu Button.js suporta 'danger')
-                    onPress={() => handleDeletePress(task)}
-                    style={{ flex: 1, marginRight: 8, backgroundColor: COLORS.primary || '#D9534F' }} // Fallback
+                    title={task.completed ? "Concluída" : "Concluir"}
+                    variant="success" 
+                    onPress={() => onComplete(task)}
+                    style={{ flex: 1, marginRight: 8, backgroundColor: task.completed ? COLORS.gray : (COLORS.green || '#10B981'), borderColor: 'transparent' }}
                     textStyle={{ color: COLORS.white }}
                   />
                   <Button
@@ -117,11 +101,17 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     marginBottom: 8,
   },
+  notesContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
   taskNotes: {
     ...FONTS.body,
-    color: COLORS.gray,
+    color: COLORS.text,
     fontStyle: 'italic',
-    marginBottom: 16,
+    marginLeft: 6,
+    flex: 1,
   },
   buttonRow: {
     flexDirection: 'row',

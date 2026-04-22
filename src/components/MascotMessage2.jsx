@@ -3,12 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import Mascot from './Mascot';
 import { COLORS, FONTS } from '../constants/theme';
 
-const MascotMessage2 = ({ message }) => {
+const MascotMessage2 = ({ message, source }) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.mascotContainer}>
-          <Mascot width={48} height={48} />
+          <Mascot width={48} height={48} source={source} />
         </View>
         
         <View style={styles.messageContainer}>

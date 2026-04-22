@@ -170,7 +170,13 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
                             </View>
 
                             <Text style={styles.label}>Título da Tarefa</Text>
-                            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Ex: Estudar para prova..." />
+                            <TextInput 
+                                style={styles.input} 
+                                value={title} 
+                                onChangeText={setTitle} 
+                                placeholder="Ex: Estudar para prova..." 
+                                placeholderTextColor={COLORS.text}
+                            />
 
                             <Text style={styles.label}>Data de Entrega</Text>
                             <TouchableOpacity style={styles.input} onPress={() => { Keyboard.dismiss(); setShowDatePicker(true); }}>
@@ -189,7 +195,14 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
                             )}
 
                             <Text style={styles.label}>Observações</Text>
-                            <TextInput style={[styles.input, styles.notesInput]} placeholder="Algum detalhe extra?" value={notes} onChangeText={setNotes} multiline={true} />
+                            <TextInput 
+                                style={[styles.input, styles.notesInput]} 
+                                placeholder="Algum detalhe extra?" 
+                                value={notes} 
+                                onChangeText={setNotes} 
+                                multiline={true} 
+                                placeholderTextColor={COLORS.text}
+                            />
 
                             <View style={styles.switchContainer}>
                                 <Text style={styles.labelSwitch}>Adicionar Lembrete?</Text>
@@ -258,7 +271,7 @@ const styles = StyleSheet.create({
     input: { backgroundColor: COLORS.gelo, borderRadius: 12, padding: 16, fontSize: 16, color: COLORS.text, marginBottom: 16, justifyContent: 'center' },
     notesInput: { height: 100, textAlignVertical: 'top' },
     dateText: { fontSize: 16, color: COLORS.text },
-    datePlaceholder: { fontSize: 16, color: COLORS.gray },
+    datePlaceholder: { fontSize: 16, color: COLORS.text },
     typeSelectorContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 16 },
     typeButton: { borderWidth: 2, borderColor: COLORS.lightGray, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, alignItems: 'center', width: '48.5%', marginBottom: 8 },
     typeButtonIcon: { fontSize: 20 },

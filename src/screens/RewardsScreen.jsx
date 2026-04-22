@@ -20,14 +20,7 @@ import AppHeader from '../components/AppHeader';
 import MascotMessage2 from '../components/MascotMessage2';
 
 const RewardsScreen = ({ navigation }) => {
-    // const { user } = useContext(AuthContext); // Pegar dados reais
-    const [userData, setUserData] = useState({
-        name: 'Ana',
-        level: 3,
-        title: 'Estudante Dedicada',
-        xpProgress: 65,
-        xpToNextLevel: 150,
-    });
+    const { user } = useContext(AuthContext); // Pegando os dados reais do usuário logado!
 
     const [metrics, setMetrics] = useState({
         weekGoals: 0,
@@ -78,7 +71,7 @@ const RewardsScreen = ({ navigation }) => {
             id: '1',
             icon: '🌟',
             name: 'Primeira Semana',
-            achieved: true,
+            achieved: metrics.streakDays >= 7,
             color: COLORS.laranja,
             bgColor: COLORS.laranjaClaro,
             description: 'Você completou suas primeiras tarefas e engajou no app durante uma semana inteira. Parabéns pelo começo!'
@@ -87,7 +80,7 @@ const RewardsScreen = ({ navigation }) => {
             id: '2',
             icon: '📚',
             name: 'Estudante',
-            achieved: true,
+            achieved: metrics.completedTasks >= 10,
             color: COLORS.marinho,
             bgColor: COLORS.gelo,
             description: 'Concedida por completar suas primeiras 10 tarefas. Você está no caminho certo!'
@@ -95,17 +88,17 @@ const RewardsScreen = ({ navigation }) => {
         {
             id: '3',
             icon: '⏰',
-            name: 'Pontual',
-            achieved: true,
+            name: 'Focado',
+            achieved: metrics.completedTasks >= 5,
             color: COLORS.green,
             bgColor: '#E8F5E9',
-            description: 'Concedida por entregar 5 tarefas antes do prazo final.'
+            description: 'Concedida por concluir suas primeiras 5 tarefas.'
         },
         {
             id: '6',
             icon: '🏅',
             name: 'Mestre',
-            achieved: false,
+            achieved: metrics.completedTasks >= 50,
             color: COLORS.gray,
             bgColor: '#F3F4F6',
             description: 'Complete 50 tarefas para desbloquear a medalha de Mestre da Organização.'
@@ -115,7 +108,7 @@ const RewardsScreen = ({ navigation }) => {
     const stats = [
         { label: 'Tarefas Concluídas', value: `${metrics.completedTasks}`, color: COLORS.green },
         { label: 'Sequência Atual', value: `${metrics.streakDays} dias`, color: COLORS.laranja },
-        { label: 'Nível Atual', value: `${metrics.currentLevel}`, color: COLORS.marinho },
+        { label: 'Nível Atual', value: `${user?.level || metrics.currentLevel || 1}`, color: COLORS.marinho },
     ];
 
     const handleMedalPress = (medal) => {
@@ -139,7 +132,7 @@ const RewardsScreen = ({ navigation }) => {
             <LinearGradient colors={COLORS.secondaryGradient}>
                 <AppHeader
                     navigation={navigation}
-                    userData={userData}
+                    userData={user} // Passando o usuário real para o AppHeader (Barra de XP)
                     showBackButton={true}
                     title="Conquistas"
                     onProfilePress={() => navigation.navigate('Profile')}
@@ -148,7 +141,7 @@ const RewardsScreen = ({ navigation }) => {
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.mascotContainer}>
-                    <MascotMessage2 message={`Você tem ${medals.filter(m => m.achieved).length} medalhas! Continue assim! 🌟`} />
+                    <MascotMessage2 message={`Oi ${user?.name?.split(' ')[0] || ''}! Você já tem ${medals.filter(m => m.achieved).length} medalhas. Continue assim! 🌟`} />
                 </View>
 
                 {/* Medalhas Conquistadas */}

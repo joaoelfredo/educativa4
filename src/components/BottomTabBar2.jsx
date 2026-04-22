@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BottomTabBar2 = ({ state, navigation }) => {
+  const insets = useSafeAreaInsets();
 
   const tabInfo = {
     'Home': { icon: 'home', label: 'Início' },
@@ -14,7 +16,7 @@ const BottomTabBar2 = ({ state, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom || 8 }]}>
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
         const { icon, label } = tabInfo[route.name] || {};
@@ -61,7 +63,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    paddingBottom: 4,
     paddingTop: 4,
     elevation: 8,
     shadowColor: '#000',
