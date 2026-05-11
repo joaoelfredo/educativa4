@@ -175,7 +175,7 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
                                 value={title} 
                                 onChangeText={setTitle} 
                                 placeholder="Ex: Estudar para prova..." 
-                                placeholderTextColor={COLORS.text}
+                                placeholderTextColor={'black'}
                             />
 
                             <Text style={styles.label}>Data de Entrega</Text>
