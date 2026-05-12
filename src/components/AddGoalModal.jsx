@@ -79,7 +79,11 @@ const AddGoalModal = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={Keyboard.dismiss} />
+        <TouchableOpacity 
+          style={styles.dismissArea} 
+          activeOpacity={1} 
+          onPress={() => { Keyboard.dismiss(); onClose(); }} 
+        />
 
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>{title}</Text>
@@ -215,19 +219,19 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   dismissArea: {
-    flex: 1,
-    width: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
 
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 24,
+    width: '90%',
   },
 
   modalTitle: {

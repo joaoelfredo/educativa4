@@ -30,41 +30,64 @@ const CadastroScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (key, value) => {
-    setForm({ ...form, [key]: value });
+    const updatedForm = { ...form, [key]: value };
+    setForm(updatedForm);
+
+    // Limpa mensagem de sucesso se o usuário voltar a digitar
+    if (successMessage) setSuccessMessage('');
+
+    // Validação em tempo real para a coincidência de senhas
+    if (key === 'password' || key === 'confirmPassword') {
+      if (updatedForm.confirmPassword && updatedForm.password !== updatedForm.confirmPassword) {
+        setErrorMessage('As senhas não coincidem.');
+      } else if (errorMessage === 'As senhas não coincidem.') {
+        setErrorMessage('');
+      }
+    }
   };
 
   const handleRegister = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-      Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
+      setErrorMessage('Por favor, preencha todos os campos.');
       return;
     }
     if (!isValidEmail(form.email)) {
-      Alert.alert('E-mail Inválido', 'Por favor, insira um formato de e-mail válido.');
+      setErrorMessage('Por favor, insira um formato de e-mail válido.');
       return;
     }
     if (form.password !== form.confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
+      setErrorMessage('As senhas não coincidem.');
       return;
     }
 
     setLoading(true);
 
     try {
+      // O código 200 é tratado como sucesso pelo Axios automaticamente
       await registerUser(form.name, form.email, form.password);
 
-      Alert.alert('Sucesso!', 'Sua conta foi criada. Agora é só fazer o login!', [
-        { text: 'OK', onPress: () => navigation.navigate('Login') },
-      ]);
+      setSuccessMessage('Cadastro realizado com sucesso! Você já pode realizar o login.');
+      
+      // Redireciona para a tela de login após 2.5 segundos para o usuário ler a mensagem
+      setTimeout(() => {
+        navigation.navigate('Login');
+      }, 2500);
+
     } catch (error) {
       console.error('Falha no cadastro:', error);
-      const errorMessage =
+      const errorText =
         error.response?.data?.message ||
         error.response?.data ||
         error.message ||
         'Não foi possível criar a conta. Tente novamente mais tarde.';
-      Alert.alert('Erro no Cadastro', errorMessage);
+      setErrorMessage(errorText);
     } finally {
       setLoading(false);
     }
@@ -133,6 +156,19 @@ const CadastroScreen = ({ navigation }) => {
                   setConfirmPasswordVisible(!isConfirmPasswordVisible)
                 }
               />
+
+              {errorMessage !== '' && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              )}
+
+              {successMessage !== '' && (
+                <View style={styles.successContainer}>
+                  <Text style={styles.successText}>{successMessage}</Text>
+                </View>
+              )}
+
               <Button
                 title="Criar Conta no EducAtiva"
                 onPress={handleRegister}
@@ -196,6 +232,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   footerText: { ...FONTS.body, color: COLORS.white },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 68, 68, 0.2)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 68, 68, 0.4)',
+  },
+  errorText: {
+    ...FONTS.body,
+    color: '#FFD166',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  successContainer: {
+    backgroundColor: 'rgba(72, 187, 120, 0.2)',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(72, 187, 120, 0.4)',
+  },
+  successText: {
+    ...FONTS.body,
+    color: '#C6F6D5',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
 });
 
 export default CadastroScreen;

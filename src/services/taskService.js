@@ -15,7 +15,7 @@ const mapTaskFromApi = (apiTask) => {
         dueDate: new Date(apiTask.dueDate).toLocaleDateString('pt-BR'), 
         notes: apiTask.notes,
         type: apiTask.type.toLowerCase(), 
-        icon: apiTask.icon,
+        icon: apiTask.icon || '📝',
         color: apiTask.color,
         completed: apiTask.completed,
         hasReminder: apiTask.hasReminder,
@@ -31,21 +31,18 @@ const mapTaskFromApi = (apiTask) => {
 const prepareDataForBackend = (data) => {
     if (!data) return data;
     const formatted = { ...data };
+
+    // Garante que o tipo esteja em MAIÚSCULAS para o ENUM do Prisma
+    if (formatted.type) {
+        formatted.type = formatted.type.toUpperCase();
+    }
     
     if (formatted.dueDate) {
-        if (typeof formatted.dueDate === 'string' && formatted.dueDate.includes('/')) {
-            const [day, month, year] = formatted.dueDate.split('/');
-            if (day && month && year) {
-                formatted.dueDate = new Date(`${year}-${month}-${day}T12:00:00.000Z`).toISOString();
-            }
-        } else if (typeof formatted.dueDate === 'string' && formatted.dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            // Se já vier no formato "YYYY-MM-DD", apenas adicionamos o horário para garantir o ISO-8601
-            formatted.dueDate = new Date(`${formatted.dueDate}T12:00:00.000Z`).toISOString();
-        } else {
-            const parsedDate = new Date(formatted.dueDate);
-            if (!isNaN(parsedDate.getTime())) {
-                formatted.dueDate = parsedDate.toISOString();
-            }
+        const parsedDate = new Date(formatted.dueDate);
+        if (!isNaN(parsedDate.getTime())) {
+            // Define para o meio-dia UTC para evitar que a data mude por causa do fuso horário
+            parsedDate.setUTCHours(12, 0, 0, 0);
+            formatted.dueDate = parsedDate.toISOString();
         }
     }
     

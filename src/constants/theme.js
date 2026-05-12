@@ -30,4 +30,4 @@ export const FONTS = {
   body: { fontSize: 16, fontWeight: '400' },
   small: { fontSize: 12, fontWeight: '400' },
   button: { fontSize: 18, fontWeight: '700' },
-};nimsa
+};

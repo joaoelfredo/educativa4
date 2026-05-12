@@ -4,8 +4,8 @@ import { Platform } from 'react-native';
 import { API_BASE_URL } from '@env';
 
 const getBaseURL = () => {
-  // Forçando a URL de produção do Render para contornar o cache do .env
-  return 'https://educativaback.onrender.com';
+  // Forçando a URL de produção do Railway para contornar o cache do .env
+  return 'https://educativaback-production.up.railway.app';
 };
 
 const BASE_URL = getBaseURL();

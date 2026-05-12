@@ -63,16 +63,12 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
         }
         const selectedType = taskTypes.find(t => t.id === type);
         
-        // Formato "YYYY-MM-DD"
-        const localDateString = date.toLocaleDateString('sv-SE');
-
-        // 3. FORMATAR DADOS PARA O BACKEND (como o HomeScreen espera)
+        // 3. FORMATAR DADOS (O taskService cuidará da conversão ISO final)
         const taskData = {
             id: editingTask ? editingTask.id : null,
             title,
             completed: editingTask ? editingTask.completed : false,
-            date: localDateString, // 'date' (YYYY-MM-DD)
-            dueDate: date.toLocaleDateString('pt-BR'), // 'dueDate' (DD/MM/YYYY)
+            dueDate: date.toISOString(), // Envia o objeto Date como string ISO
             notes: notes,
             type: selectedType.id, // 'trabalho' (minúsculo)
             icon: selectedType.icon,
@@ -153,7 +149,11 @@ const AddTaskModal = ({ visible, onClose, onSubmit, editingTask, selectedDate, o
                         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                             <Ionicons name="close-circle" size={32} color={COLORS.lightGray} />
                         </TouchableOpacity>
-                        <KeyboardAwareScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+                        <KeyboardAwareScrollView
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={false}
+                            extraScrollHeight={Platform.OS === 'ios' ? 20 : 100} // Adiciona espaço extra para o teclado
+                        >
                             <Text style={styles.title}>{editingTask ? '✏️ Editar Tarefa' : '➕ Nova Tarefa'}</Text>
 
                             <Text style={styles.label}>Tipo de Tarefa</Text>

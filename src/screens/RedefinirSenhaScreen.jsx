@@ -26,25 +26,28 @@ const RedefinirSenhaScreen = ({ navigation, route }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
     const handleResetPassword = async () => {
+        setErrorMessage('');
+
         if (!token) {
-            Alert.alert('Erro', 'Token de recuperação inválido ou não encontrado. Por favor, tente novamente pelo link do seu e-mail.');
+            setErrorMessage('Token de recuperação inválido ou não encontrado.');
             return;
         }
         if (!password || !confirmPassword) {
-            Alert.alert('Atenção', 'Por favor, preencha e confirme sua nova senha.');
+            setErrorMessage('Por favor, preencha e confirme sua nova senha.');
             return;
         }
         if (password !== confirmPassword) {
-            Alert.alert('Erro', 'As senhas não coincidem.');
+            setErrorMessage('As senhas não coincidem.');
             return;
         }
         if (password.length < 6) {
-             Alert.alert('Senha Fraca', 'Sua nova senha deve ter pelo menos 6 caracteres.');
+             setErrorMessage('Sua nova senha deve ter pelo menos 6 caracteres.');
             return;
         }
         
@@ -68,7 +71,7 @@ const RedefinirSenhaScreen = ({ navigation, route }) => {
         } catch (error) {
             console.error("Erro ao redefinir senha:", error.response?.data);
             const errorMessage = error.response?.data?.message || 'Token inválido/expirado ou erro no servidor.';
-            Alert.alert('Erro', errorMessage);
+            setErrorMessage(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -123,6 +126,12 @@ const RedefinirSenhaScreen = ({ navigation, route }) => {
                                 }
                                 onIconPress={() => setConfirmPasswordVisible(!isConfirmPasswordVisible)}
                             />
+
+                            {errorMessage !== '' && (
+                                <View style={styles.errorContainer}>
+                                    <Text style={styles.errorText}>{errorMessage}</Text>
+                                </View>
+                            )}
 
                             <Button
                                 title="Salvar Nova Senha"
@@ -195,6 +204,20 @@ const styles = StyleSheet.create({
     footerText: {
         ...FONTS.body,
         color: COLORS.white
+    },
+    errorContainer: {
+        backgroundColor: 'rgba(255, 68, 68, 0.2)',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 68, 68, 0.4)',
+    },
+    errorText: {
+        ...FONTS.body,
+        color: '#FFD166',
+        textAlign: 'center',
+        fontWeight: 'bold',
     },
 });
 
